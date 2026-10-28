@@ -21,7 +21,10 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: نصب ابزارهای اندروید
+      -       - name: نصب ابزارهای اندروید
+        uses: android-actions/setup-android@v3
+
+      - name: پذیرش مجوزها و نصب ابزارها
         run: |
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
