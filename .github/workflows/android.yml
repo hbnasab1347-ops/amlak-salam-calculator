@@ -22,13 +22,16 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+   
       - name: نصب ابزارهای اندروید
-        uses: android-actions/setup-android@v3
-
-      - name: نصب بسته‌های لازم اندروید
+        shell: bash
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          set -e
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | head -n 1)"
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses
+          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
 
       - name: نصب Gradle
         uses: gradle/actions/setup-gradle@v4
