@@ -16,15 +16,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: نصب جاوا
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-      - name: آماده‌سازی اندروید
-        uses: android-actions/setup-android@v3
-        with:
-          packages: ''
-          
+
       - name: نصب ابزارهای اندروید
         run: |
           yes | sdkmanager --licenses
