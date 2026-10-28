@@ -1,16 +1,16 @@
-
 name: Build Amlak Salam APK
 
 on:
   workflow_dispatch:
   push:
     paths:
-      - '**.zip'
+      - '*.zip'
       - '.github/workflows/android.yml'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: دریافت فایل‌ها
         uses: actions/checkout@v4
@@ -21,7 +21,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      -       - name: نصب ابزارهای اندروید
+      - name: نصب ابزارهای اندروید
         uses: android-actions/setup-android@v3
 
       - name: پذیرش مجوزها و نصب ابزارها
@@ -38,7 +38,7 @@ jobs:
         run: |
           mkdir -p unpacked
           ZIP_FILE="./amlak-salam-icon-update.zip"
-          test -n "$ZIP_FILE"
+          test -f "$ZIP_FILE"
           unzip -o "$ZIP_FILE" -d unpacked
           ANDROID_DIR="$(find unpacked -name settings.gradle -print -quit | xargs dirname)"
           test -n "$ANDROID_DIR"
