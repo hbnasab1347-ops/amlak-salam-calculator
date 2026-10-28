@@ -1,0 +1,55 @@
+
+name: Build Amlak Salam APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '**.zip'
+      - '.github/workflows/android.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: دریافت فایل‌ها
+        uses: actions/checkout@v4
+
+      - name: نصب جاوا
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: آماده‌سازی اندروید
+        uses: android-actions/setup-android@v3
+
+      - name: نصب ابزارهای اندروید
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: نصب Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: بازکردن بسته برنامه
+        run: |
+          mkdir -p unpacked
+          ZIP_FILE="$(find . -maxdepth 1 -name '*.zip' -print -quit)"
+          test -n "$ZIP_FILE"
+          unzip -o "$ZIP_FILE" -d unpacked
+          ANDROID_DIR="$(find unpacked -name settings.gradle -print -quit | xargs dirname)"
+          test -n "$ANDROID_DIR"
+          echo "ANDROID_DIR=$ANDROID_DIR" >> "$GITHUB_ENV"
+
+      - name: ساخت APK
+        run: gradle -p "$ANDROID_DIR" assembleDebug
+
+      - name: آماده‌سازی فایل نصب
+        uses: actions/upload-artifact@v4
+        with:
+          name: Amlak-Salam-APK
+          path: '**/app/build/outputs/apk/debug/*.apk'
+          if-no-files-found: error
