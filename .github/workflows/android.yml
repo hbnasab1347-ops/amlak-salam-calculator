@@ -38,6 +38,16 @@ jobs:
           set -e
           mkdir -p unpacked
           unzip -o "./amlak-salam-icon-update.zip" -d unpacked
+
+          echo "فایل‌های مربوط به آیکون:"
+          find unpacked -type f \( \
+            -name 'AndroidManifest.xml' -o \
+            -name 'ic_launcher.png' -o \
+            -name 'ic_launcher_round.png' -o \
+            -name 'ic_launcher_foreground.png' -o \
+            -name 'ic_launcher.xml' \
+          \) -print
+
           ANDROID_DIR="$(find unpacked -name settings.gradle -print -quit)"
           if [ -z "$ANDROID_DIR" ]; then
             ANDROID_DIR="$(find unpacked -name settings.gradle.kts -print -quit)"
