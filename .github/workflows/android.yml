@@ -22,10 +22,10 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: آماده‌سازی ابزارهای اندروید
+      - name: نصب ابزارهای اندروید
         uses: android-actions/setup-android@v3
 
-      - name: نصب بسته‌های اندروید
+      - name: نصب بسته‌های لازم اندروید
         run: |
           yes | sdkmanager --licenses
           sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
@@ -40,15 +40,11 @@ jobs:
         run: |
           set -e
           mkdir -p unpacked
-          ZIP_FILE="./amlak-salam-icon-update.zip"
-          test -f "$ZIP_FILE"
-          unzip -o "$ZIP_FILE" -d unpacked
-
+          unzip -o "./amlak-salam-icon-update.zip" -d unpacked
           ANDROID_DIR="$(find unpacked -name settings.gradle -print -quit)"
           if [ -z "$ANDROID_DIR" ]; then
             ANDROID_DIR="$(find unpacked -name settings.gradle.kts -print -quit)"
           fi
-
           test -n "$ANDROID_DIR"
           ANDROID_DIR="$(dirname "$ANDROID_DIR")"
           echo "ANDROID_DIR=$ANDROID_DIR" >> "$GITHUB_ENV"
