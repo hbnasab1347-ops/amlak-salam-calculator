@@ -22,7 +22,7 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      -       - name: نصب ابزارهای اندروید
+           - name: نصب ابزارهای اندروید
         uses: android-actions/setup-android@v3
         with:
           packages: |
