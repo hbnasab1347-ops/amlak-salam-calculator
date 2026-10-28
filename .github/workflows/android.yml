@@ -1,3 +1,4 @@
+
 name: Build Amlak Salam APK
 
 on:
@@ -21,10 +22,8 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-            - name: نصب ابزارهای اندروید
+      - name: نصب ابزارهای اندروید
         uses: android-actions/setup-android@v3
-        with:
-          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
       - name: نصب Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -37,11 +36,14 @@ jobs:
           ZIP_FILE="./amlak-salam-icon-update.zip"
           test -f "$ZIP_FILE"
           unzip -o "$ZIP_FILE" -d unpacked
-          ANDROID_DIR="$(find unpacked -name settings.gradle -print -quit | xargs dirname)"
+          ANDROID_DIR="$(find unpacked -name settings.gradle -print -quit | xargs -r dirname)"
+          if [ -z "$ANDROID_DIR" ]; then
+            ANDROID_DIR="$(find unpacked -name settings.gradle.kts -print -quit | xargs -r dirname)"
+          fi
           test -n "$ANDROID_DIR"
           echo "ANDROID_DIR=$ANDROID_DIR" >> "$GITHUB_ENV"
 
-      - name: ساخت APK
+      - name: ساخت فایل نصب اندروید
         run: gradle -p "$ANDROID_DIR" assembleDebug
 
       - name: آماده‌سازی فایل نصب
