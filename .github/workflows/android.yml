@@ -34,7 +34,7 @@ jobs:
       - name: بازکردن بسته برنامه
         run: |
           mkdir -p unpacked
-          ZIP_FILE="$(find . -maxdepth 1 -name '*.zip' -print -quit)"
+          ZIP_FILE="./amlak-salam-icon-update.zip"
           test -n "$ZIP_FILE"
           unzip -o "$ZIP_FILE" -d unpacked
           ANDROID_DIR="$(find unpacked -name settings.gradle -print -quit | xargs dirname)"
