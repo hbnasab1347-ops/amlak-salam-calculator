@@ -20,10 +20,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-
       - name: آماده‌سازی اندروید
         uses: android-actions/setup-android@v3
-
+        with:
+          packages: ''
+          
       - name: نصب ابزارهای اندروید
         run: |
           yes | sdkmanager --licenses
