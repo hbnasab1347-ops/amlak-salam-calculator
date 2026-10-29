@@ -37,7 +37,7 @@ jobs:
         run: |
           set -e
           mkdir -p unpacked
-          unzip -o "./amlak-salam-icon-update.zip" -d unpacked
+          unzip -o "./AmlakSalam_Icon_Package.zip" -d unpacked
 
           echo "فایل‌های مربوط به آیکون:"
           find unpacked -type f \( \
@@ -52,7 +52,12 @@ jobs:
           if [ -z "$ANDROID_DIR" ]; then
             ANDROID_DIR="$(find unpacked -name settings.gradle.kts -print -quit)"
           fi
-          test -n "$ANDROID_DIR"
+
+          if [ -z "$ANDROID_DIR" ]; then
+            echo "ERROR: فایل تنظیمات پروژه اندروید پیدا نشد."
+            exit 1
+          fi
+
           ANDROID_DIR="$(dirname "$ANDROID_DIR")"
           echo "ANDROID_DIR=$ANDROID_DIR" >> "$GITHUB_ENV"
 
