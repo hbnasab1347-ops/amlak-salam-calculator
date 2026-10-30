@@ -1,0 +1,36 @@
+name: Build Amlak Salam Windows Installer
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'package.json'
+      - 'main.js'
+      - 'app/**'
+      - 'build-icon.ico'
+      - '.github/workflows/build-windows.yml'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: دریافت کد
+        uses: actions/checkout@v4
+
+      - name: نصب Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: نصب وابستگی‌ها
+        run: npm install
+
+      - name: ساخت نصب‌کننده ویندوز
+        run: npm run dist
+
+      - name: بارگذاری فایل نصب
+        uses: actions/upload-artifact@v4
+        with:
+          name: Amlak-Salam-Windows-Installer
+          path: dist/*.exe
+          if-no-files-found: error
