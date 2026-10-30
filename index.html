@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#173b2b">
+<meta name="description" content="محاسبه‌گر برآورد قیمت آپارتمان املاک سلام">
+<title>محاسبه‌گر قیمت آپارتمان | املاک سلام</title>
+<style>
+:root{--green:#173b2b;--green2:#245740;--gold:#b99752;--ink:#1d2923;--muted:#647168;--line:#dfe7e1;--bg:#f2f5f2;--soft:#f7f9f7}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif;line-height:1.8;padding:22px}
+.wrap{max-width:900px;margin:0 auto}
+header{background:linear-gradient(135deg,var(--green),#28563e);color:white;border-radius:20px;padding:26px 24px;margin-bottom:18px;box-shadow:0 12px 30px #173b2b20;border-bottom:4px solid var(--gold)}
+.brand{font-size:13px;color:#e5d3a7;letter-spacing:.3px}
+h1{font-size:clamp(23px,4vw,32px);margin:5px 0 2px}
+.subtitle{margin:0;color:#e5ece7;font-size:14px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin:16px 0;box-shadow:0 5px 18px #173b2b08}
+.section-heading{margin:0 0 18px;font-size:19px;color:var(--green);padding-bottom:10px;border-bottom:1px solid var(--line)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:17px}
+.field{min-width:0}
+label{display:block;font-weight:700;font-size:14px;margin-bottom:7px}
+input,select{display:block;width:100%;min-height:49px;border:1px solid #cbd6ce;border-radius:10px;background:#fff;color:var(--ink);padding:11px 12px;font:16px Tahoma,Arial,sans-serif;outline:none}
+input:focus,select:focus{border-color:var(--green2);box-shadow:0 0 0 3px #24574018}
+.hint{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.7}
+.action{display:flex;gap:10px;margin-top:22px}
+button{border:0;border-radius:11px;padding:13px 18px;font:700 16px Tahoma,Arial,sans-serif;cursor:pointer}
+.primary{background:var(--green);color:white;flex:1}
+.primary:hover{background:var(--green2)}
+.secondary{background:#edf2ee;color:var(--green)}
+.result{display:none}
+.result-top{background:var(--green);color:#fff;border-radius:13px;padding:18px;margin-bottom:15px}
+.result-top .eyebrow{font-size:13px;color:#d7e6db}
+.price{font-size:clamp(25px,5vw,34px);font-weight:800;line-height:1.5;overflow-wrap:anywhere}
+.price-unit{font-size:13px;color:#e3ece6}
+.rows{border:1px solid var(--line);border-radius:12px;padding:4px 14px}
+.row{display:flex;justify-content:space-between;gap:15px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.row:last-child{border-bottom:0}
+.row span{color:var(--muted)}
+.row b{text-align:left;overflow-wrap:anywhere}
+.row.total{font-size:16px;background:var(--soft);margin:0 -14px;padding:13px 14px}
+.note{font-size:12px;color:var(--muted);line-height:2;margin:15px 2px 0}
+.alert{display:none;background:#fff7e8;color:#78561a;border:1px solid #ead7ae;border-radius:10px;padding:12px;margin-top:12px;font-size:13px}
+footer{text-align:center;color:#78837c;font-size:12px;padding:8px 10px 18px}
+@media(max-width:620px){body{padding:11px}.panel{padding:16px}.fields{grid-template-columns:1fr;gap:13px}header{padding:20px 17px}.action{flex-direction:column}.row{font-size:13px}.row.total{font-size:14px}}
+@media print{body{background:#fff;padding:0}.wrap{max-width:none}header,.panel{box-shadow:none}button{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand">املاک سلام | شهرستان گرمسار</div>
+  <h1>محاسبه‌گر قیمت آپارتمان</h1>
+  <p class="subtitle">ابزار برآورد اولیه قیمت واحد مسکونی بر اساس سن بنا و امکانات</p>
+</header>
+
+<section class="panel">
+  <h2 class="section-heading">مشخصات ملک</h2>
+  <div class="fields">
+    <div class="field">
+      <label for="basePrice">۱. قیمت پایه هر مترمربع واحد نوساز و کلید نخورده (تومان)</label>
+      <input id="basePrice" type="text" inputmode="numeric" autocomplete="off" placeholder="مثلاً ۸۰٬۰۰۰٬۰۰۰">
+    </div>
+    <div class="field">
+      <label for="apartmentType">۲. نوع آپارتمان</label>
+      <select id="apartmentType">
+        <option value="raw_new">کلید نخورده خام</option>
+        <option value="raw_aged">کلید نخورده خام سالخورده</option>
+        <option value="equipped_new">کلید نخورده تجهیز شده</option>
+        <option value="equipped_aged">کلید نخورده تجهیز شده سالخورده</option>
+        <option value="aged">سالخورده</option>
+      </select>
+      <div class="hint">با انتخاب نوع آپارتمان، افزایش تجهیز و کسورات سن بنا طبق همان نوع محاسبه می‌شود.</div>
+    </div>
+    <div class="field">
+      <label for="unitCount">۳. تعداد کل واحدهای ساختمان</label>
+      <select id="unitCount"><option value="2" selected>2 واحد</option><option value="3">3 واحد</option><option value="4">4 واحد</option><option value="5">5 واحد</option><option value="6">6 واحد</option><option value="7">7 واحد</option><option value="8">8 واحد</option><option value="9">9 واحد</option><option value="10">10 واحد</option><option value="11">11 واحد</option><option value="12">12 واحد</option><option value="13">13 واحد</option><option value="14">14 واحد</option><option value="15">15 واحد</option><option value="16">16 واحد</option><option value="17">17 واحد</option><option value="18">18 واحد</option><option value="19">19 واحد</option><option value="20">20 واحد</option><option value="21">21 واحد</option><option value="22">22 واحد</option><option value="23">23 واحد</option><option value="24">24 واحد</option><option value="25">25 واحد</option><option value="26">26 واحد</option><option value="27">27 واحد</option><option value="28">28 واحد</option><option value="29">29 واحد</option><option value="30">30 واحد</option>
+      </select>
+      <div class="hint">تعدیل تعداد واحدها: ساختمان ۲ واحدی +۳٪ و ساختمان ۳۰ واحدی ۰٪؛ بین این دو به‌صورت تدریجی محاسبه می‌شود.</div>
+    </div>
+    <div class="field">
+      <label for="area">۴. متراژ واحد (مترمربع)</label>
+      <input id="area" type="number" min="0.01" step="0.01" inputmode="decimal" placeholder="مثلاً ۱۰۰">
+    </div>
+    <div class="field">
+      <label for="constructionYear">۵. سال ساخت</label>
+      <select id="constructionYear" aria-label="سال ساخت آپارتمان"></select>
+      <div class="hint">سال ساخت را انتخاب کنید؛ سن بنا بر اساس سال جاری شمسی به‌طور خودکار محاسبه می‌شود.</div>
+    </div>
+    <div class="field">
+      <label for="floor">۶. طبقه واحد</label>
+      <input id="floor" type="number" min="0" max="100" step="1" value="1" inputmode="numeric" placeholder="مثلاً ۳">
+      <div class="hint">در صورت نداشتن آسانسور، درصد کسر بر اساس شماره طبقه محاسبه می‌شود.</div>
+    </div>
+    <div class="field">
+      <label for="elevator">۷. وضعیت آسانسور</label>
+      <select id="elevator"><option value="yes">دارای آسانسور</option><option value="no">فاقد آسانسور</option></select>
+    </div>
+    <div class="field">
+      <label for="parking">۸. وضعیت پارکینگ</label>
+      <select id="parking">
+        <option value="private">پارکینگ اختصاصی</option>
+        <option value="shared">پارکینگ محوطه، مزاحم یا مشاع</option>
+        <option value="none">فاقد پارکینگ</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="storage">۹. وضعیت انباری</label>
+      <select id="storage"><option value="yes">دارای انباری</option><option value="no">فاقد انباری</option></select>
+    </div>
+    <div class="field">
+      <label for="light">۱۰. وضعیت نور مستقیم</label>
+      <select id="light"><option value="yes">دارای نور مستقیم</option><option value="no">فاقد نور مستقیم</option></select>
+    </div>
+    <div class="field" id="typeInfoField">
+      <label>روش محاسبه بر اساس نوع آپارتمان</label>
+      <div class="hint" id="typeInfo">واحد خام نوساز: بدون افزایش تجهیز و بدون استهلاک سن بنا.</div>
+    </div>
+  </div>
+  <div class="action">
+    <button class="primary" id="calculateBtn" type="button">محاسبه قیمت آپارتمان</button>
+    <button class="secondary" id="resetBtn" type="button">پاک‌کردن اطلاعات</button>
+  </div>
+  <div id="alert" class="alert" role="alert"></div>
+</section>
+
+<section id="result" class="panel result" aria-live="polite">
+  <h2 class="section-heading">گزارش برآورد</h2>
+  <div class="result-top">
+    <div class="eyebrow">قیمت کل برآوردی واحد</div>
+    <div id="totalPrice" class="price">—</div>
+    <div class="price-unit">تومان</div>
+  </div>
+  <div class="rows" id="resultRows"></div>
+  <p class="note">این محاسبه صرفاً برآورد اولیه بر اساس ضرایب تعریف‌شده در برنامه است و جایگزین ارزیابی رسمی کارشناس یا بررسی معاملات روز منطقه نیست. ضرایب باید با نظر کارشناسی و شرایط واقعی ملک تطبیق داده شوند.</p>
+  <div class="action"><button class="secondary" type="button" onclick="window.print()">چاپ گزارش</button></div>
+</section>
+<footer>محاسبه‌گر املاک سلام — نسخه برآورد قیمت آپارتمان</footer>
+</div>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+$('basePrice').addEventListener('input', function(){
+  const digits=this.value.replace(/[^0-9]/g,'');
+  this.value=digits ? Number(digits).toLocaleString('en-US') : '';
+});
+const fmt = n => new Intl.NumberFormat('fa-IR',{maximumFractionDigits:2}).format(n);
+const money = n => new Intl.NumberFormat('fa-IR',{maximumFractionDigits:0}).format(Math.round(n));
+const pct = n => fmt(n) + '٪';
+function showAlert(message){ $('alert').textContent=message; $('alert').style.display='block'; }
+function hideAlert(){ $('alert').textContent=''; $('alert').style.display='none'; }
+function wholeAgeForCompletion(age){
+  const y=Math.max(0,Math.floor(age));
+  if(y===0) return 15;
+  if(y>=30) return 0;
+  return 3*(30-y)/29;
+}
+function unitCountAdjustment(count){
+  const n=Math.max(2,Math.min(30,Number(count)||2));
+  return 3*(30-n)/28;
+}
+function isAgedType(type){ return type==='raw_aged' || type==='equipped_aged' || type==='aged'; }
+function isEquippedType(type){ return type==='equipped_new' || type==='equipped_aged' || type==='aged'; }
+function currentJalaliYear(){
+  const raw=new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric'}).format(new Date());
+  const digits=raw.replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[^0-9]/g,'');
+  return Number(digits);
+}
+function populateConstructionYears(){
+  const select=$('constructionYear');
+  const current=currentJalaliYear();
+  const previous=select.value;
+  select.innerHTML='';
+  for(let y=current-30;y<=current;y++){
+    const opt=document.createElement('option'); opt.value=String(y); opt.textContent=String(y).replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[Number(d)]); select.appendChild(opt);
+  }
+  if(previous && Number(previous)>=current-30 && Number(previous)<=current) select.value=previous;
+  else select.value=String(current);
+}
+populateConstructionYears();
+function updateTypeUI(){
+  const type=$('apartmentType').value;
+  const aged=isAgedType(type);
+  $('constructionYear').disabled=false;
+  const info={
+    raw_new:'واحد خام نوساز: بدون افزایش تجهیز و بدون استهلاک سن بنا.',
+    raw_aged:'واحد خام سالخورده: استهلاک سن بنا اعمال می‌شود؛ افزایش تجهیز ندارد.',
+    equipped_new:'واحد تجهیزشده نوساز: ۱۵٪ به قیمت پایه اضافه می‌شود؛ استهلاک سن بنا ندارد.',
+    equipped_aged:'واحد تجهیزشده سالخورده: افزایش تجهیز بر اساس سن بنا و استهلاک سن بنا اعمال می‌شود.',
+    aged:'واحد سالخورده: دارای تجهیزات؛ افزایش تجهیزات بر اساس سن بنا محاسبه می‌شود و استهلاک نیز اعمال می‌شود.'
+  };
+  $('typeInfo').textContent=info[type];
+}
+$('apartmentType').addEventListener('change',updateTypeUI);
+updateTypeUI();
+function calculate(){
+  hideAlert();
+  const basePrice=Number($('basePrice').value.replace(/[^0-9.]/g,''));
+  const area=Number($('area').value);
+  const type=$('apartmentType').value;
+  const constructionYear=Number($('constructionYear').value);
+  const age=currentJalaliYear()-constructionYear;
+  const floor=Number($('floor').value);
+  const unitCount=Number($('unitCount').value);
+  const unitCountRate=unitCountAdjustment(unitCount);
+  const agedType=isAgedType(type);
+  const equippedType=isEquippedType(type);
+  const completionRate = type==='equipped_new' ? 15 : (type==='equipped_aged' || type==='aged' ? wholeAgeForCompletion(age) : 0);
+  if(!Number.isFinite(basePrice)||basePrice<=0||!Number.isFinite(area)||area<=0){
+    showAlert('لطفاً قیمت پایه هر مترمربع و متراژ واحد را به‌درستی وارد کنید.'); return;
+  }
+  if(!Number.isFinite(constructionYear)||constructionYear<currentJalaliYear()-30||constructionYear>currentJalaliYear()||!Number.isFinite(floor)||floor<0||!Number.isInteger(floor)){
+    showAlert('لطفاً سال ساخت و شماره طبقه را بررسی کنید.'); return;
+  }
+  const wholeAge=Math.floor(age);
+  // روش دوم: درصد استهلاک هر سال جداگانه محاسبه و تا سن فعلی جمع می‌شود؛ سال اول ۲٪ و سال سی‌ام ۱٫۵٪.
+  const annualRate = y => y>=30 ? 1.5 : 2-((y-1)*(0.5/29));
+  let baseAgeRate=0;
+  if(agedType){
+    for(let y=1; y<=Math.min(wholeAge,30); y++) baseAgeRate += annualRate(y);
+    if(wholeAge>30) baseAgeRate += (wholeAge-30)*1.5;
+  }
+  const currentYearRate=agedType && wholeAge>0 ? annualRate(wholeAge) : 0;
+  const adjustedBasePrice=basePrice*(1+completionRate/100);
+  const priceAfterUnitAdjustment=basePrice*(1+(completionRate+unitCountRate)/100);
+  const ageRate=baseAgeRate;
+  const elevatorRate=$('elevator').value==='no' ? 3*floor : 0;
+  const parking=$('parking').value;
+  const parkingRate=parking==='none'?6:(parking==='shared'?3:0);
+  const storageRate=$('storage').value==='no'?3:0;
+  const lightRate=$('light').value==='no'?4:0;
+  const totalRate=ageRate+elevatorRate+parkingRate+storageRate+lightRate;
+  // فرمول درخواستی: درصد کسورات بر مبنای قیمت پس از تجهیز محاسبه می‌شود، اما مبلغ کسر از قیمت پایه خام کم می‌شود.
+  const totalDeductionAmount=adjustedBasePrice*(totalRate/100);
+  const finalPerMeter=Math.max(0,basePrice+basePrice*completionRate/100+basePrice*unitCountRate/100-totalDeductionAmount);
+  const totalPrice=finalPerMeter*area;
+  const parkingLabel=parking==='none'?'فاقد پارکینگ اختصاصی':(parking==='shared'?'پارکینگ محوطه، مزاحم یا مشاع':'پارکینگ اختصاصی');
+  const rows=[
+    ['نوع آپارتمان',$('apartmentType').selectedOptions[0].text],
+    ['تعداد کل واحدهای ساختمان',fmt(unitCount)+' واحد'],
+    ['افزایش قیمت بابت تعداد واحدها',pct(unitCountRate)+' — '+money(basePrice*unitCountRate/100)+' تومان'],
+    ['قیمت پایه هر مترمربع واحد خام',money(basePrice)+' تومان'],
+    ['افزایش قیمت بابت تجهیزات',pct(completionRate)+' — '+money(basePrice*completionRate/100)+' تومان'],
+    ['قیمت هر مترمربع پس از افزایش تجهیز و تعداد واحدها',money(basePrice+basePrice*completionRate/100+basePrice*unitCountRate/100)+' تومان'],
+    ['سال ساخت',fmt(constructionYear)],
+    ['سن بنا بر اساس سال جاری شمسی',fmt(age)+' سال'],
+    ['نرخ سالانه آخرین سال بنا',pct(currentYearRate)],
+    ['مجموع درصد استهلاک سن بنا',pct(ageRate)+' — '+money(adjustedBasePrice*ageRate/100)+' تومان'],
+    ['وضعیت آسانسور', $('elevator').value==='no'?'فاقد آسانسور — کسر '+pct(elevatorRate):'دارای آسانسور — بدون کسر'],
+    ['وضعیت پارکینگ',parkingLabel+' — کسر '+pct(parkingRate)],
+    ['وضعیت انباری',$('storage').value==='no'?'فاقد انباری — کسر ۳٪':'دارای انباری — بدون کسر'],
+    ['وضعیت نور',$('light').value==='no'?'فاقد نور مستقیم — کسر ۴٪':'دارای نور مستقیم — بدون کسر'],
+    ['ضریب افزایش تجهیز و تکمیل',pct(completionRate)],
+    ['مجموع درصد کاهش‌ها',pct(totalRate)],
+    ['مجموع مبلغ استهلاک و کسورات بر مبنای قیمت پایه به‌علاوه تجهیزات',money(totalDeductionAmount)+' تومان'],
+    ['قیمت نهایی هر مترمربع',money(finalPerMeter)+' تومان'],
+    ['متراژ واحد',fmt(area)+' مترمربع'],
+    ['قیمت کل برآوردی واحد',money(totalPrice)+' تومان']
+  ];
+  $('totalPrice').textContent=money(totalPrice);
+  $('resultRows').innerHTML=rows.map((r,i)=>'<div class="row'+(i===rows.length-1||i===rows.length-3?' total':'')+'"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('');
+  if(totalRate>100){
+    $('resultRows').insertAdjacentHTML('beforeend','<p class="hint">توجه: مجموع کاهش‌ها از ۱۰۰٪ بیشتر شده است؛ قیمت نهایی برای جلوگیری از عدد منفی صفر در نظر گرفته شد. لطفاً ورودی‌ها و ضرایب را بررسی کنید.</p>');
+  }
+  $('result').style.display='block';
+  $('result').scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('calculateBtn').addEventListener('click',calculate);
+$('resetBtn').addEventListener('click',()=>{
+  ['basePrice','area'].forEach(id=>$(id).value='');
+  $('apartmentType').value='raw_new'; $('unitCount').value='2'; populateConstructionYears(); $('constructionYear').value=String(currentJalaliYear()); $('floor').value='1'; updateTypeUI();
+  $('elevator').value='yes'; $('parking').value='private'; $('storage').value='yes'; $('light').value='yes';
+  $('result').style.display='none'; hideAlert();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter' && !e.target.matches('button')) calculate();});
+</script>
+</body>
+</html>
