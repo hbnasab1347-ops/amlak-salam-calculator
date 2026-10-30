@@ -1,0 +1,35 @@
+{
+  "name": "amlak-salam-calculator",
+  "version": "1.0.0",
+  "description": "محاسبه‌گر املاک سلام",
+  "main": "main.js",
+  "author": "Amlak Salam",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis",
+    "publish": "electron-builder --win nsis --publish always"
+  },
+  "devDependencies": {
+    "electron": "^39.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "electron-updater": "^6.6.2"
+  },
+  "build": {
+    "appId": "ir.amlaaksalam.calculator.windows",
+    "productName": "محاسبه‌گر املاک سلام",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "app/**/*", "package.json"],
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "build-icon.ico" },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "محاسبه‌گر املاک سلام"
+    },
+    "publish": [{ "provider": "github", "owner": "hbnasab1347-ops", "repo": "amlak-salam-calculator" }]
+  }
+}
