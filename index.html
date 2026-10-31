@@ -145,6 +145,7 @@ $('basePrice').addEventListener('input', function(){
   this.value=digits ? Number(digits).toLocaleString('en-US') : '';
 });
 const fmt = n => new Intl.NumberFormat('fa-IR',{maximumFractionDigits:2}).format(n);
+const yearFmt = n => new Intl.NumberFormat('fa-IR',{useGrouping:false,maximumFractionDigits:0}).format(n);
 const money = n => new Intl.NumberFormat('fa-IR',{maximumFractionDigits:0}).format(Math.round(n));
 const pct = n => fmt(n) + '٪';
 function showAlert(message){ $('alert').textContent=message; $('alert').style.display='block'; }
@@ -237,24 +238,14 @@ function calculate(){
   const parkingLabel=parking==='none'?'فاقد پارکینگ اختصاصی':(parking==='shared'?'پارکینگ محوطه، مزاحم یا مشاع':'پارکینگ اختصاصی');
   const rows=[
     ['نوع آپارتمان',$('apartmentType').selectedOptions[0].text],
-    ['تعداد کل واحدهای ساختمان',fmt(unitCount)+' واحد'],
-    ['افزایش قیمت بابت تعداد واحدها',pct(unitCountRate)+' — '+money(basePrice*unitCountRate/100)+' تومان'],
-    ['قیمت پایه هر مترمربع واحد خام',money(basePrice)+' تومان'],
-    ['افزایش قیمت بابت تجهیزات',pct(completionRate)+' — '+money(basePrice*completionRate/100)+' تومان'],
-    ['قیمت هر مترمربع پس از افزایش تجهیز و تعداد واحدها',money(basePrice+basePrice*completionRate/100+basePrice*unitCountRate/100)+' تومان'],
-    ['سال ساخت',fmt(constructionYear)],
-    ['سن بنا بر اساس سال جاری شمسی',fmt(age)+' سال'],
-    ['نرخ سالانه آخرین سال بنا',pct(currentYearRate)],
-    ['مجموع درصد استهلاک سن بنا',pct(ageRate)+' — '+money(adjustedBasePrice*ageRate/100)+' تومان'],
-    ['وضعیت آسانسور', $('elevator').value==='no'?'فاقد آسانسور — کسر '+pct(elevatorRate):'دارای آسانسور — بدون کسر'],
-    ['وضعیت پارکینگ',parkingLabel+' — کسر '+pct(parkingRate)],
-    ['وضعیت انباری',$('storage').value==='no'?'فاقد انباری — کسر ۳٪':'دارای انباری — بدون کسر'],
-    ['وضعیت نور',$('light').value==='no'?'فاقد نور مستقیم — کسر ۴٪':'دارای نور مستقیم — بدون کسر'],
-    ['ضریب افزایش تجهیز و تکمیل',pct(completionRate)],
-    ['مجموع درصد کاهش‌ها',pct(totalRate)],
-    ['مجموع مبلغ استهلاک و کسورات بر مبنای قیمت پایه به‌علاوه تجهیزات',money(totalDeductionAmount)+' تومان'],
-    ['قیمت نهایی هر مترمربع',money(finalPerMeter)+' تومان'],
+    ['سال ساخت و سن بنا',yearFmt(constructionYear)+'  |  '+fmt(age)+' سال'],
     ['متراژ واحد',fmt(area)+' مترمربع'],
+    ['تعداد واحدهای ساختمان',fmt(unitCount)+' واحد  |  تعدیل '+pct(unitCountRate)],
+    ['قیمت پایه هر مترمربع',money(basePrice)+' تومان'],
+    ['افزایش بابت تجهیزات',pct(completionRate)+'  ('+money(basePrice*completionRate/100)+' تومان)'],
+    ['استهلاک بنا',pct(ageRate)+'  ('+money(adjustedBasePrice*ageRate/100)+' تومان)'],
+    ['کسورات امکانات','آسانسور '+pct(elevatorRate)+' | پارکینگ '+pct(parkingRate)+' | انباری '+pct(storageRate)+' | نور '+pct(lightRate)],
+    ['قیمت نهایی هر مترمربع',money(finalPerMeter)+' تومان'],
     ['قیمت کل برآوردی واحد',money(totalPrice)+' تومان']
   ];
   $('totalPrice').textContent=money(totalPrice);
