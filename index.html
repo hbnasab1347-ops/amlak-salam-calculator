@@ -259,7 +259,7 @@ function calculate(){
 $('calculateBtn').addEventListener('click',calculate);
 $('resetBtn').addEventListener('click',()=>{
   ['basePrice','area'].forEach(id=>$(id).value='');
-  $('apartmentType').value='raw_new'; $('unitCount').value='2'; populateConstructionYears(); $('constructionYear').value=String(currentJalaliYear()); $('floor').value='1'; updateTypeUI();
+  $('apartmentType').value='unequipped'; $('unitCount').value='2'; populateConstructionYears(); $('constructionYear').value=String(currentJalaliYear()); $('floor').value='1'; updateTypeUI();
   $('elevator').value='yes'; $('parking').value='private'; $('storage').value='yes'; $('light').value='yes';
   $('result').style.display='none'; hideAlert();
 });
