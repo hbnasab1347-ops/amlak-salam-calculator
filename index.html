@@ -76,7 +76,7 @@ footer{text-align:center;color:#78837c;font-size:12px;padding:8px 10px 18px}
       <label for="unitCount">۳. تعداد کل واحدهای ساختمان</label>
       <select id="unitCount"><option value="2" selected>2 واحد</option><option value="3">3 واحد</option><option value="4">4 واحد</option><option value="5">5 واحد</option><option value="6">6 واحد</option><option value="7">7 واحد</option><option value="8">8 واحد</option><option value="9">9 واحد</option><option value="10">10 واحد</option><option value="11">11 واحد</option><option value="12">12 واحد</option><option value="13">13 واحد</option><option value="14">14 واحد</option><option value="15">15 واحد</option><option value="16">16 واحد</option><option value="17">17 واحد</option><option value="18">18 واحد</option><option value="19">19 واحد</option><option value="20">20 واحد</option><option value="21">21 واحد</option><option value="22">22 واحد</option><option value="23">23 واحد</option><option value="24">24 واحد</option><option value="25">25 واحد</option><option value="26">26 واحد</option><option value="27">27 واحد</option><option value="28">28 واحد</option><option value="29">29 واحد</option><option value="30">30 واحد</option>
       </select>
-      <div class="hint">تعدیل تعداد واحدها: ساختمان ۲ واحدی +۳٪ و ساختمان ۳۰ واحدی ۰٪؛ بین این دو به‌صورت تدریجی محاسبه می‌شود.</div>
+      <div class="hint">تعدیل تعداد واحدها: ساختمان ۲ واحدی +۱٫۵٪ و ساختمان ۳۰ واحدی ۰٪؛ بین این دو به‌صورت تدریجی محاسبه می‌شود.</div>
     </div>
     <div class="field">
       <label for="area">۴. متراژ واحد (مترمربع)</label>
@@ -153,11 +153,11 @@ function wholeAgeForCompletion(age){
   const y=Math.max(0,Math.floor(age));
   if(y===0) return 15;
   if(y>=30) return 0;
-  return 3*(30-y)/29;
+  return 1.5*(30-y)/29;
 }
 function unitCountAdjustment(count){
   const n=Math.max(2,Math.min(30,Number(count)||2));
-  return 3*(30-n)/28;
+  return 1.5*(30-n)/28;
 }
 function isAgedType(type){ return type==='raw_aged' || type==='equipped_aged' || type==='aged'; }
 function isEquippedType(type){ return type==='equipped_new' || type==='equipped_aged' || type==='aged'; }
