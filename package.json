@@ -21,8 +21,7 @@
     "appId": "ir.amlaaksalam.calculator.windows",
     "productName": "محاسبه‌گر املاک سلام",
     "directories": { "output": "dist", "buildResources": "build" },
-    "files": ["main.js", "app/**/*", "package.json"],
-    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "build-icon.ico" },
+"files": ["main.js", "index.html", "build-icon.ico", "package.json"],    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "build-icon.ico" },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
