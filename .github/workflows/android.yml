@@ -75,6 +75,17 @@ jobs:
           print(f"Configured separate Android applicationId in {path}")
           PY
 
+      - name: قراردادن آخرین نسخه محاسبه‌گر در برنامه اندروید
+        shell: bash
+        run: |
+          set -euo pipefail
+          ASSETS_DIR="$ANDROID_DIR/app/src/main/assets"
+          mkdir -p "$ASSETS_DIR"
+          cp ./index.html "$ASSETS_DIR/index.html"
+          grep -q "yearFmt" "$ASSETS_DIR/index.html"
+          grep -q "سال ساخت و سن بنا" "$ASSETS_DIR/index.html"
+          echo "نسخه به‌روز index.html در بسته اندروید قرار گرفت."
+
       - name: ساخت فایل نصب اندروید
         run: gradle -p "$ANDROID_DIR" assembleDebug
 
