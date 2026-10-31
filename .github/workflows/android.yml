@@ -1,5 +1,4 @@
-
-name: Build Amlak Salam APK
+name: Build Amlak Salam APK - Separate Install
 
 on:
   workflow_dispatch:
@@ -11,7 +10,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: دریافت فایل‌ها
         uses: actions/checkout@v4
@@ -32,41 +30,56 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: بازکردن بسته برنامه
+      - name: بازکردن بسته و تنظیم شناسه مستقل
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           mkdir -p unpacked
           unzip -o "./AmlakSalam_Icon_Package.zip" -d unpacked
 
-          echo "فایل‌های مربوط به آیکون:"
-          find unpacked -type f \( \
-            -name 'AndroidManifest.xml' -o \
-            -name 'ic_launcher.png' -o \
-            -name 'ic_launcher_round.png' -o \
-            -name 'ic_launcher_foreground.png' -o \
-            -name 'ic_launcher.xml' \
-          \) -print
-
-          ANDROID_DIR="$(find unpacked -name settings.gradle -print -quit)"
-          if [ -z "$ANDROID_DIR" ]; then
-            ANDROID_DIR="$(find unpacked -name settings.gradle.kts -print -quit)"
-          fi
-
-          if [ -z "$ANDROID_DIR" ]; then
+          SETTINGS="$(find unpacked -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)"
+          if [ -z "$SETTINGS" ]; then
             echo "ERROR: فایل تنظیمات پروژه اندروید پیدا نشد."
             exit 1
           fi
-
-          ANDROID_DIR="$(dirname "$ANDROID_DIR")"
+          ANDROID_DIR="$(dirname "$SETTINGS")"
           echo "ANDROID_DIR=$ANDROID_DIR" >> "$GITHUB_ENV"
+
+          python3 - "$ANDROID_DIR" <<'PY'
+          import pathlib, re, sys
+          root = pathlib.Path(sys.argv[1])
+          candidates = [p for p in root.rglob("build.gradle") if "build" not in p.parts]
+          candidates += [p for p in root.rglob("build.gradle.kts") if "build" not in p.parts]
+          app_files = [p for p in candidates if p.parent.name == "app"]
+          if len(app_files) != 1:
+              raise SystemExit(f"Expected one app Gradle file, found: {[str(p) for p in app_files]}")
+          path = app_files[0]
+          text = path.read_text(encoding="utf-8")
+          new_id = "ir.amlaaksalam.calculator.android2"
+          if path.name.endswith(".kts"):
+              line = f'        applicationId = "{new_id}"'
+              pattern = r'(?m)^\s*applicationId\s*=\s*"[^"]*"\s*$'
+          else:
+              line = f'        applicationId "{new_id}"'
+              pattern = r'(?m)^\s*applicationId\s+["\'][^"\']+["\']\s*$'
+          if re.search(pattern, text):
+              text = re.sub(pattern, line, text, count=1)
+          else:
+              match = re.search(r'(?m)^([ \t]*)defaultConfig\s*\{', text)
+              if not match:
+                  raise SystemExit("defaultConfig block not found; refusing unsafe edit.")
+              pos = match.end()
+              text = text[:pos] + "\n" + line + text[pos:]
+          path.write_text(text, encoding="utf-8")
+          print(f"Configured separate Android applicationId in {path}")
+          PY
 
       - name: ساخت فایل نصب اندروید
         run: gradle -p "$ANDROID_DIR" assembleDebug
 
-      - name: آماده‌سازی فایل نصب
+      - name: آماده‌سازی فایل نصب مستقل
         uses: actions/upload-artifact@v4
         with:
-          name: Amlak-Salam-APK
+          name: Amlak-Salam-Android-Separate
           path: '**/app/build/outputs/apk/debug/*.apk'
           if-no-files-found: error
