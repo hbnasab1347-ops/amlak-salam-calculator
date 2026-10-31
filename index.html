@@ -64,11 +64,8 @@ footer{text-align:center;color:#78837c;font-size:12px;padding:8px 10px 18px}
     <div class="field">
       <label for="apartmentType">۲. نوع آپارتمان</label>
       <select id="apartmentType">
-        <option value="raw_new">کلید نخورده خام</option>
-        <option value="raw_aged">کلید نخورده خام سالخورده</option>
-        <option value="equipped_new">کلید نخورده تجهیز شده</option>
-        <option value="equipped_aged">کلید نخورده تجهیز شده سالخورده</option>
-        <option value="aged">سالخورده</option>
+        <option value="unequipped">تجهیز نشده</option>
+        <option value="equipped">تجهیز شده</option>
       </select>
       <div class="hint">با انتخاب نوع آپارتمان، افزایش تجهیز و کسورات سن بنا طبق همان نوع محاسبه می‌شود.</div>
     </div>
@@ -150,18 +147,16 @@ const money = n => new Intl.NumberFormat('fa-IR',{maximumFractionDigits:0}).form
 const pct = n => fmt(n) + '٪';
 function showAlert(message){ $('alert').textContent=message; $('alert').style.display='block'; }
 function hideAlert(){ $('alert').textContent=''; $('alert').style.display='none'; }
-function wholeAgeForCompletion(age){
-  const y=Math.max(0,Math.floor(age));
-  if(y===0) return 15;
-  if(y>=30) return 0;
-  return 1.5*(30-y)/29;
+function equipmentRate(age){
+  const y=Math.max(0,Number(age)||0);
+  return Math.max(0,15*(10-y)/10);
 }
 function unitCountAdjustment(count){
   const n=Math.max(2,Math.min(30,Number(count)||2));
   return 1.5*(30-n)/28;
 }
-function isAgedType(type){ return type==='raw_aged' || type==='equipped_aged' || type==='aged'; }
-function isEquippedType(type){ return type==='equipped_new' || type==='equipped_aged' || type==='aged'; }
+function isAgedType(type){ return true; }
+function isEquippedType(type){ return type==='equipped'; }
 function currentJalaliYear(){
   const raw=new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric'}).format(new Date());
   const digits=raw.replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[^0-9]/g,'');
@@ -184,11 +179,8 @@ function updateTypeUI(){
   const aged=isAgedType(type);
   $('constructionYear').disabled=false;
   const info={
-    raw_new:'واحد خام نوساز: بدون افزایش تجهیز و بدون استهلاک سن بنا.',
-    raw_aged:'واحد خام سالخورده: استهلاک سن بنا اعمال می‌شود؛ افزایش تجهیز ندارد.',
-    equipped_new:'واحد تجهیزشده نوساز: ۱۵٪ به قیمت پایه اضافه می‌شود؛ استهلاک سن بنا ندارد.',
-    equipped_aged:'واحد تجهیزشده سالخورده: افزایش تجهیز بر اساس سن بنا و استهلاک سن بنا اعمال می‌شود.',
-    aged:'واحد سالخورده: دارای تجهیزات؛ افزایش تجهیزات بر اساس سن بنا محاسبه می‌شود و استهلاک نیز اعمال می‌شود.'
+    unequipped:'واحد تجهیز نشده: افزایش بابت تجهیزات ندارد؛ استهلاک بنا بر اساس سن ساختمان محاسبه می‌شود.',
+    equipped:'واحد تجهیز شده: افزایش تجهیزات از ۱۵٪ در سال ساخت تا صفر در سن ۱۰ سالگی کاهش می‌یابد؛ استهلاک بنا نیز جداگانه محاسبه می‌شود.'
   };
   $('typeInfo').textContent=info[type];
 }
@@ -204,9 +196,9 @@ function calculate(){
   const floor=Number($('floor').value);
   const unitCount=Number($('unitCount').value);
   const unitCountRate=unitCountAdjustment(unitCount);
-  const agedType=isAgedType(type);
+  const agedType=age>0;
   const equippedType=isEquippedType(type);
-  const completionRate = type==='equipped_new' ? 15 : (type==='equipped_aged' || type==='aged' ? wholeAgeForCompletion(age) : 0);
+  const completionRate = equippedType ? equipmentRate(age) : 0;
   if(!Number.isFinite(basePrice)||basePrice<=0||!Number.isFinite(area)||area<=0){
     showAlert('لطفاً قیمت پایه هر مترمربع و متراژ واحد را به‌درستی وارد کنید.'); return;
   }
@@ -214,14 +206,10 @@ function calculate(){
     showAlert('لطفاً سال ساخت و شماره طبقه را بررسی کنید.'); return;
   }
   const wholeAge=Math.floor(age);
-  // روش دوم: درصد استهلاک هر سال جداگانه محاسبه و تا سن فعلی جمع می‌شود؛ سال اول ۲٪ و سال سی‌ام ۱٫۵٪.
-  const annualRate = y => y>=30 ? 1.5 : 2-((y-1)*(0.5/29));
-  let baseAgeRate=0;
-  if(agedType){
-    for(let y=1; y<=Math.min(wholeAge,30); y++) baseAgeRate += annualRate(y);
-    if(wholeAge>30) baseAgeRate += (wholeAge-30)*1.5;
-  }
-  const currentYearRate=agedType && wholeAge>0 ? annualRate(wholeAge) : 0;
+  // نرخ استهلاک متناسب با سن: ۳٪ در سال اول تا ۲٪ در سال سی‌ام؛ نرخ سن فعلی در کل سن بنا اعمال می‌شود.
+  const annualRate = y => y>=30 ? 2 : 3-((y-1)*(1/29));
+  const baseAgeRate = wholeAge>0 ? annualRate(wholeAge)*wholeAge : 0;
+  const currentYearRate = wholeAge>0 ? annualRate(wholeAge) : 0;
   const adjustedBasePrice=basePrice*(1+completionRate/100);
   const priceAfterUnitAdjustment=basePrice*(1+(completionRate+unitCountRate)/100);
   const ageRate=baseAgeRate;
