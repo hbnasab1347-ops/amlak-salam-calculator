@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - '*.zip'
+      - 'index.html'
       - '.github/workflows/android.yml'
 
 jobs:
