@@ -56,7 +56,7 @@ jobs:
               raise SystemExit(f"Expected one app Gradle file, found: {[str(p) for p in app_files]}")
           path = app_files[0]
           text = path.read_text(encoding="utf-8")
-          new_id = "ir.amlaaksalam.calculator.android2"
+          new_id = "ir.amlaaksalam.calculator.android3"
           if path.name.endswith(".kts"):
               line = f'        applicationId = "{new_id}"'
               pattern = r'(?m)^\s*applicationId\s*=\s*"[^"]*"\s*$'
