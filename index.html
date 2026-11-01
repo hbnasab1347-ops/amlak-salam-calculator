@@ -225,6 +225,7 @@ function calculate(){
   const elevatorRate=$('elevator').value==='no' ? 3*floor : 0;
   const parking=$('parking').value;
   const parkingRate=parking==='none'?6:(parking==='shared'?3:0);
+  const parkingLabel=parking==='none'?'فاقد پارکینگ اختصاصی':(parking==='shared'?'پارکینگ محوطه، مزاحم یا مشاع':'پارکینگ اختصاصی');
   const storageRate=$('storage').value==='no'?3:0;
   const lightRate=$('light').value==='no'?4:0;
   const totalRate=ageRate+elevatorRate+parkingRate+storageRate+lightRate;
