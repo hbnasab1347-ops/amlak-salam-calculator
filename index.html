@@ -139,7 +139,7 @@ footer{text-align:center;color:#78837c;font-size:12px;padding:8px 10px 18px}
   </div>
   <div class="rows" id="resultRows"></div>
   <p class="note">این محاسبه صرفاً برآورد اولیه بر اساس ضرایب تعریف‌شده در برنامه است و جایگزین ارزیابی رسمی کارشناس یا بررسی معاملات روز منطقه نیست. ضرایب باید با نظر کارشناسی و شرایط واقعی ملک تطبیق داده شوند.</p>
-  <div class="action"><button class="secondary" type="button" id="printBtn">چاپ گزارش</button><button class="secondary" type="button" id="shareBtn">اشتراک‌گذاری گزارش</button></div>
+  <div class="action"><button class="secondary" type="button" id="printBtn">چاپ گزارش</button><button class="secondary" type="button" id="shareBtn">کپی گزارش برای ارسال</button></div>
 </section>
 <footer>محاسبه‌گر املاک سلام — نسخه برآورد قیمت آپارتمان</footer>
 </div>
@@ -266,13 +266,32 @@ function calculate(){
   $('result').scrollIntoView({behavior:'smooth',block:'start'});
 }
 $('printBtn').addEventListener('click',()=>window.print());
+async function copyReportToClipboard(text){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    try { await navigator.clipboard.writeText(text); return true; } catch(e) {}
+  }
+  const area=document.createElement('textarea');
+  area.value=text;
+  area.setAttribute('readonly','');
+  area.style.position='fixed';
+  area.style.left='-9999px';
+  area.style.top='0';
+  document.body.appendChild(area);
+  area.focus();
+  area.select();
+  let copied=false;
+  try { copied=document.execCommand('copy'); } catch(e) {}
+  area.remove();
+  return copied;
+}
 $('shareBtn').addEventListener('click',async()=>{
   if(!window.lastAmlakReport){showAlert('ابتدا محاسبه را انجام دهید.');return;}
-  try{
-    if(navigator.share){await navigator.share({title:'گزارش برآورد قیمت آپارتمان - املاک سلام',text:window.lastAmlakReport});}
-    else if(navigator.clipboard && navigator.clipboard.writeText){await navigator.clipboard.writeText(window.lastAmlakReport);showAlert('متن گزارش کپی شد؛ می‌توانید آن را در پیام‌رسان موردنظر ارسال کنید.');}
-    else {showAlert('اشتراک‌گذاری در این مرورگر پشتیبانی نمی‌شود؛ از گزینه چاپ استفاده کنید.');}
-  }catch(e){if(e.name!=='AbortError') showAlert('اشتراک‌گذاری انجام نشد.');}
+  const copied=await copyReportToClipboard(window.lastAmlakReport);
+  if(copied){
+    showAlert('گزارش کپی شد. اکنون در پیام‌رسان موردنظر، محل نوشتن پیام را انتخاب و گزینه چسباندن (Ctrl+V) را بزنید.');
+  } else {
+    showAlert('کپی خودکار انجام نشد. لطفاً از دکمه چاپ گزارش استفاده کنید.');
+  }
 });
 $('calculateBtn').addEventListener('click',calculate);
 $('resetBtn').addEventListener('click',()=>{
