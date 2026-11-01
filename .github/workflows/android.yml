@@ -37,6 +37,8 @@ jobs:
           set -euo pipefail
           mkdir -p unpacked
           unzip -o "./AmlakSalam_Icon_Package.zip" -d unpacked
+          echo '--- ANDROID SOURCE FILES ---'
+          find unpacked -type f \( -name '*Activity*' -o -name 'AndroidManifest.xml' \) -print
 
           SETTINGS="$(find unpacked -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)"
           if [ -z "$SETTINGS" ]; then
