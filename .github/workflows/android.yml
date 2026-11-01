@@ -53,6 +53,58 @@ jobs:
           ANDROID_DIR="$(dirname "$SETTINGS")"
           echo "ANDROID_DIR=$ANDROID_DIR" >> "$GITHUB_ENV"
 
+          MAIN_ACTIVITY="$ANDROID_DIR/app/src/main/java/ir/amlaaksalam/calculator/MainActivity.java"
+          cat > "$MAIN_ACTIVITY" <<'JAVA'
+          package ir.amlaaksalam.calculator;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.content.Intent;
+          import android.webkit.WebView;
+          import android.webkit.WebChromeClient;
+          import android.webkit.WebViewClient;
+          import android.webkit.WebSettings;
+          import android.webkit.JavascriptInterface;
+
+          public class MainActivity extends Activity {
+              private WebView webView;
+
+              private class ShareBridge {
+                  @JavascriptInterface
+                  public void shareText(final String text) {
+                      runOnUiThread(() -> {
+                          Intent sendIntent = new Intent(Intent.ACTION_SEND);
+                          sendIntent.setType("text/plain");
+                          sendIntent.putExtra(Intent.EXTRA_TEXT, text);
+                          Intent chooser = Intent.createChooser(sendIntent, "ارسال گزارش محاسبه‌گر املاک سلام");
+                          startActivity(chooser);
+                      });
+                  }
+              }
+
+              @Override
+              public void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  webView = new WebView(this);
+                  WebSettings settings = webView.getSettings();
+                  settings.setJavaScriptEnabled(true);
+                  settings.setDomStorageEnabled(true);
+                  webView.addJavascriptInterface(new ShareBridge(), "AndroidShare");
+                  webView.setWebViewClient(new WebViewClient());
+                  webView.setWebChromeClient(new WebChromeClient());
+                  setContentView(webView);
+                  webView.loadUrl("file:///android_asset/index.html");
+              }
+
+              @Override
+              public void onBackPressed() {
+                  if (webView != null && webView.canGoBack()) webView.goBack();
+                  else super.onBackPressed();
+              }
+          }
+          JAVA
+          echo "Native Android share bridge installed in MainActivity."
+
           python3 - "$ANDROID_DIR" <<'PY'
           import pathlib, re, sys
           root = pathlib.Path(sys.argv[1])
