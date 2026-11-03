@@ -28,6 +28,7 @@ let currentStep = 0;
 let saveTimer = null;
 let saving = false;
 let locationCatalog = [];
+let customFieldDefinitions = [];
 let state = {
   transactionType:'',
   property:{propertyType:'',usageType:''},
@@ -36,7 +37,8 @@ let state = {
   pricing:{publicPrice:'',redlinePrice:'',expertPrice:'',budgetMin:'',budgetMax:''},
   conditions:{deposit:'',monthlyRent:'',depositMin:'',depositMax:'',rentMin:'',rentMax:'',exchange:false,exchangeDetails:'',specialTerms:''},
   contact:{fullName:'',mobile:'',phone:'',email:''},
-  notes:{public:'',confidential:''}
+  notes:{public:'',confidential:''},
+  customFields:{property:{},demand:{}}
 };
 
 const $ = selector => document.querySelector(selector);
@@ -55,6 +57,28 @@ const textarea = (path,label,placeholder='',full=true) => `<div class="field ${f
 const checkbox = (path,label) => `<label class="check-item"><input type="checkbox" data-path="${path}" ${getPath(path)?'checked':''}><span>${label}</span></label>`;
 function toast(message){const el=$('#toast');el.textContent=message;el.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.style.display='none',2800);}
 function setSaveState(message){$('#saveState').textContent=message;}
+
+function customFieldVisible(field){
+  const matches=(items,value)=>!items.length||items.includes(value);
+  return matches(field.transactionTypes,state.transactionType)&&matches(field.propertyTypes,state.property.propertyType)&&matches(field.usageTypes,state.property.usageType);
+}
+function renderCustomFields(){
+  const fields=customFieldDefinitions.filter(customFieldVisible);
+  if(!fields.length)return '';
+  const path='customFields.'+recordType+'.';
+  const valueFor=field=>state.customFields?.[recordType]?.[field.fieldKey];
+  const controls=fields.map(field=>{
+    const value=valueFor(field), required=field.isRequired?'required':'';
+    const label=escapeHtml(field.label)+(field.isRequired?' *':'');
+    if(field.fieldType==='checkbox')return '<label class="custom-check"><input type="checkbox" data-path="'+path+field.fieldKey+'" '+(value?'checked':'')+' '+required+'><span>'+label+'</span></label>';
+    if(field.fieldType==='multi')return '<div class="field full"><label>'+label+'</label><div class="check-grid">'+field.options.map(option=>'<label class="check-item"><input type="checkbox" data-array="'+path+field.fieldKey+'" value="'+escapeHtml(option)+'" '+((Array.isArray(value)&&value.includes(option))?'checked':'')+'><span>'+escapeHtml(option)+'</span></label>').join('')+'</div></div>';
+    if(field.fieldType==='select')return '<div class="field"><label>'+label+'</label><select data-path="'+path+field.fieldKey+'" '+required+'><option value="">انتخاب کنید</option>'+field.options.map(option=>'<option value="'+escapeHtml(option)+'" '+(value===option?'selected':'')+'>'+escapeHtml(option)+'</option>').join('')+'</select></div>';
+    if(field.fieldType==='textarea')return '<div class="field full"><label>'+label+'</label><textarea data-path="'+path+field.fieldKey+'" '+required+'>'+escapeHtml(value||'')+'</textarea></div>';
+    return '<div class="field"><label>'+label+'</label><input type="'+(field.fieldType==='number'?'number':'text')+'" data-path="'+path+field.fieldKey+'" value="'+escapeHtml(value??'')+'" '+required+'></div>';
+  }).join('');
+  return '<section class="custom-fields-block"><h3>فیلدها و امکانات تکمیلی</h3><p>این موارد طبق تنظیمات دفتر برای نوع ملک و معامله انتخاب‌شده نمایش داده می‌شوند.</p><div class="field-grid">'+controls+'</div></section>';
+}
+
 function renderStepper(){
   $('#stepper').innerHTML=stepNames.map((name,index)=>`<div class="step-item ${index===currentStep?'active':index<currentStep?'done':''}"><span class="step-number">${index<currentStep?'✓':index+1}</span><span class="step-name">${name}</span></div>`).join('');
 }
@@ -231,6 +255,7 @@ function renderStep(){
   $('#draftLabel').textContent = draftId ? 'شناسه پیش‌نویس: '+draftId.slice(0,8) : 'پیش‌نویس جدید';
   const renderers=[renderChoiceStep,renderPropertyStep,renderLocationStep,renderPricingStep,renderContactStep,renderFinalStep];
   $('#stepContent').innerHTML=renderers[currentStep]();
+  if(currentStep===1) $('#stepContent').insertAdjacentHTML('beforeend',renderCustomFields());
   $('#previousButton').disabled=currentStep===0;
   $('#nextButton').hidden=currentStep===5;
   $('#submitButton').hidden=currentStep!==5;
@@ -256,6 +281,7 @@ function validateStep(){
   if(currentStep===0 && !state.transactionType){toast('ابتدا نوع معامله یا تقاضا را انتخاب کنید.');return false;}
   if(currentStep===1 && (!state.property.propertyType || !state.property.usageType)){toast('نوع ملک و کاربری را مشخص کنید.');return false;}
   if(currentStep===2 && !state.location.city.trim()){toast('شهر را مشخص کنید.');return false;}
+  if(currentStep===1){const missing=customFieldDefinitions.filter(customFieldVisible).find(field=>field.isRequired&&(()=>{const v=state.customFields?.[recordType]?.[field.fieldKey];return v==null||v===''||(Array.isArray(v)&&!v.length);})());if(missing){toast('تکمیل فیلد الزامی «'+missing.label+'» ضروری است.');return false;}}
   return true;
 }
 function updateFromControl(target){
@@ -300,6 +326,8 @@ async function init(){
     if(saved){const p=saved.payload||{};draftId=saved.id;state={...state,...p,property:{...state.property,...p.property},location:{...state.location,...p.location},details:{...state.details,...p.details,facilities:Array.isArray(p.details?.facilities)?p.details.facilities:[]},pricing:{...state.pricing,...p.pricing},conditions:{...state.conditions,...p.conditions},contact:{...state.contact,...p.contact},notes:{...state.notes,...p.notes}};currentStep=Math.max(0,Math.min(5,Number(saved.step)||0));}
   }
   locationCatalog=await api.listLocationCatalog(false);
+  customFieldDefinitions=await api.listCustomFields(recordType,false);
+  state.customFields={property:{},demand:{},...(state.customFields||{}),property:{...(state.customFields?.property||{})},demand:{...(state.customFields?.demand||{})}};
   renderStep();
   const handleFieldChange=event=>{
     const target=event.target;
