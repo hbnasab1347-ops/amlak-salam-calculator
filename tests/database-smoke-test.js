@@ -30,6 +30,27 @@ async function main() {
     assert.strictEqual(database.listLocationCatalog(false).length, 0);
     assert.strictEqual(database.listLocationCatalog(true).length, 6);
 
+    const customField = database.saveCustomField({
+      entityType:'property', key:'passage_width', label:'عرض گذر', fieldType:'number',
+      options:[], transactionTypes:['sale'], propertyTypes:['land'], usageTypes:[],
+      sortOrder:12, isRequired:true
+    });
+    assert.ok(customField.saved);
+    let propertyFields = database.listCustomFields('property',false);
+    assert.strictEqual(propertyFields.length,1);
+    assert.strictEqual(propertyFields[0].label,'عرض گذر');
+    assert.strictEqual(propertyFields[0].isRequired,true);
+    assert.deepStrictEqual(propertyFields[0].transactionTypes,['sale']);
+    assert.strictEqual(database.listCustomFields('demand',false).length,0);
+    assert.strictEqual(database.listCustomFields('all',false).length,1);
+    assert.throws(()=>database.saveCustomField({entityType:'property',key:'bad key',label:'شناسه نامعتبر',fieldType:'text'}),/شناسه/);
+    assert.throws(()=>database.saveCustomField({entityType:'property',key:'choice_field',label:'گزینه',fieldType:'select',options:[]}),/گزینه/);
+    database.setCustomFieldActive(propertyFields[0].id,false);
+    assert.strictEqual(database.listCustomFields('property',false).length,0);
+    assert.strictEqual(database.listCustomFields('property',true).length,1);
+    database.setCustomFieldActive(propertyFields[0].id,true);
+    assert.strictEqual(database.listCustomFields('property',false).length,1);
+
     const draft = database.saveDraft({
       type: 'property',
       step: 2,
