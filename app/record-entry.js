@@ -234,7 +234,7 @@ function updateFromControl(target){
     state.transactionType=target.dataset.choice;
   }else if(target.dataset.path){
     let value=target.type==='checkbox'?target.checked:target.value;
-    if(['details.elevator','details.storage','details.directLight'].includes(target.dataset.path)) value=value===true||value==='true';
+    if(target.tagName==='SELECT' && (target.value==='true'||target.value==='false')) value=target.value==='true';
     setPath(state,target.dataset.path,value);
   }
   scheduleSave();
