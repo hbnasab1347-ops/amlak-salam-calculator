@@ -331,13 +331,13 @@ function dashboardStats() {
 const CUSTOM_FIELD_TYPES = ['text','number','textarea','select','checkbox','multi'];
 function listCustomFields(entityType = 'property', includeInactive = false) {
   if (!['property','demand','all'].includes(entityType)) throw new Error('نوع پرونده معتبر نیست.');
-  const entityFilter = entityType === 'all' ? '' : 'entity_type=? AND ';
+  const whereClause = entityType === 'all' ? (includeInactive ? '' : 'WHERE is_active=1') : 'WHERE entity_type=?' + (includeInactive ? '' : ' AND is_active=1');
   const params = entityType === 'all' ? [] : [entityType];
   return many(`SELECT id,entity_type AS entityType,field_key AS fieldKey,label,field_type AS fieldType,
     options_json AS optionsJson,is_required AS isRequired,is_active AS isActive,sort_order AS sortOrder,
     transaction_types_json AS transactionTypesJson,property_types_json AS propertyTypesJson,
     usage_types_json AS usageTypesJson,help_text AS helpText
-    FROM field_definitions WHERE ${entityFilter}${includeInactive ? '' : 'is_active=1'}
+    FROM field_definitions ${whereClause}
     ORDER BY entity_type,sort_order,label COLLATE NOCASE`, params).map(row => ({
       ...row, isRequired:Boolean(row.isRequired), isActive:Boolean(row.isActive),
       options:JSON.parse(row.optionsJson || '[]'),
