@@ -60,14 +60,86 @@ function renderStepper(){
 function renderChoiceStep(){
   return `<h2 class="step-title">نوع ${isDemand?'تقاضا':'معامله'} را انتخاب کنید</h2><p class="step-help">لطفاً مشخص کنید ${isDemand?'به دنبال چه نوع ملکی هستید':'قصد انجام چه نوع معامله‌ای را دارید'} تا فرم متناسب نمایش داده شود.</p><div class="choice-grid">${transactionOptions.map(([value,label,icon,description])=>`<button type="button" class="choice-card ${state.transactionType===value?'selected':''}" data-choice="${value}"><span class="choice-icon">${icon}</span><span class="choice-copy"><strong>${label}</strong><small>${description}</small></span><span class="choice-check">${state.transactionType===value?'●':'○'}</span></button>`).join('')}</div><div class="info-strip">${isDemand?'هرچه مشخصات، محدوده و بودجه را دقیق‌تر وارد کنید، امکان تطبیق تقاضا با فایل‌های موجود بهتر خواهد بود.':'تهاتر و معاوضه در بخش شرایط ویژه معامله و در مراحل پایانی قابل ثبت است.'}</div>`;
 }
+function booleanSelect(path,label){
+  const value=Boolean(getPath(path));
+  return `<div class="field"><label>${label}</label><select data-path="${path}"><option value="false" ${!value?'selected':''}>ندارد</option><option value="true" ${value?'selected':''}>دارد</option></select></div>`;
+}
+function facilityChecks(options,title){
+  return `<div class="field full"><label>${title}</label><div class="check-grid">${options.map(label=>`<label class="check-item"><input type="checkbox" data-array="details.facilities" value="${escapeHtml(label)}" ${(state.details.facilities||[]).includes(label)?'checked':''}><span>${label}</span></label>`).join('')}</div></div>`;
+}
 function renderPropertyStep(){
-  let details = isDemand
-    ? numberInput('details.areaMin','حداقل متراژ (مترمربع)','مثلاً ۷۰') + numberInput('details.areaMax','حداکثر متراژ (مترمربع)','مثلاً ۱۲۰') + numberInput('details.bedroomsMin','حداقل تعداد خواب','مثلاً ۲')
-    : numberInput('details.area','متراژ واحد / بنا (مترمربع)','مثلاً ۱۰۰') + numberInput('details.landArea','مساحت زمین (مترمربع)','در صورت کاربرد') + numberInput('details.constructionYear','سال ساخت','مثلاً ۱۴۰۰') + numberInput('details.floorNumber','طبقه واحد','مثلاً ۲') + numberInput('details.totalFloors','تعداد کل طبقات','مثلاً ۵') + numberInput('details.unitCount','تعداد کل واحدهای ساختمان','مثلاً ۱۰') + numberInput('details.bedrooms','تعداد خواب','مثلاً ۲');
-  let extras = isDemand
-    ? `<div class="field full"><label>امکانات موردنیاز</label><div class="check-grid">${['آسانسور','پارکینگ','انباری',...facilityOptions.slice(0,5)].map(label=>`<label class="check-item"><input type="checkbox" data-array="details.facilities" value="${escapeHtml(label)}" ${state.details.facilities.includes(label)?'checked':''}><span>${label}</span></label>`).join('')}</div></div>`
-    : `<div class="field"><label>آسانسور</label><select data-path="details.elevator"><option value="false" ${!state.details.elevator?'selected':''}>ندارد</option><option value="true" ${state.details.elevator?'selected':''}>دارد</option></select></div><div class="field"><label>نوع پارکینگ</label><select data-path="details.parkingType">${[['none','ندارد'],['exclusive','اختصاصی'],['shared','مشاع'],['yard','حیاطی'],['problem','مزاحم / مشکل‌دار']].map(([v,l])=>`<option value="${v}" ${state.details.parkingType===v?'selected':''}>${l}</option>`).join('')}</select></div><div class="field"><label>انباری</label><select data-path="details.storage"><option value="false" ${!state.details.storage?'selected':''}>ندارد</option><option value="true" ${state.details.storage?'selected':''}>دارد</option></select></div><div class="field"><label>نور مستقیم</label><select data-path="details.directLight"><option value="false" ${!state.details.directLight?'selected':''}>ندارد</option><option value="true" ${state.details.directLight?'selected':''}>دارد</option></select></div><div class="field full"><label>سایر امکانات</label><div class="check-grid">${facilityOptions.map(label=>`<label class="check-item"><input type="checkbox" data-array="details.facilities" value="${escapeHtml(label)}" ${state.details.facilities.includes(label)?'checked':''}><span>${label}</span></label>`).join('')}</div></div>`;
-  return `<h2 class="step-title">مشخصات ${isDemand?'ملک موردنظر':'ملک'}</h2><p class="step-help">نوع ملک و کاربری را مشخص کنید؛ فیلدهای تکمیلی با توجه به نوع پرونده در مراحل بعد قابل توسعه و شخصی‌سازی هستند.</p><div class="field-grid">${selectInput('property.propertyType','نوع ملک',propertyTypes)}${selectInput('property.usageType','نوع کاربری',usageTypes)}${details}${extras}</div>`;
+  const type=state.property.propertyType;
+  const isLand=type==='land';
+  const isApartment=type==='apartment';
+  const isVilla=type==='villa';
+  const isCommercial=type==='commercial';
+  const isOffice=type==='office';
+  const isIndustrial=type==='industrial';
+  const isOld=type==='old_building';
+  const typeFacilities={
+    apartment:['کمد دیواری','جاکفشی','آیفون تصویری','دوربین مداربسته','تراس / بالکن','آب مستقل','برق مستقل','گاز مستقل','تلفن ثابت'],
+    land:['بر خیابان','دسترسی آسفالت','آب شهری','برق','گاز','آب کشاورزی','چاه مجاز','دیوارکشی'],
+    villa:['حیاط','استخر','آلاچیق','فضای سبز','سیستم گرمایش','سیستم سرمایش','آب مستقل','برق مستقل','گاز مستقل','دوربین مداربسته'],
+    commercial:['بر خیابان','کرکره برقی','سرویس بهداشتی','آب مستقل','برق مستقل','گاز مستقل','تلفن ثابت','دوربین مداربسته'],
+    office:['آسانسور','پارکینگ','انباری','کمد دیواری','پارتیشن','شبکه و اینترنت','تلفن ثابت','دوربین مداربسته'],
+    industrial:['برق سه‌فاز','گاز صنعتی','آب صنعتی','دسترسی کامیون','جرثقیل سقفی','سوله','محوطه بارگیری'],
+    old_building:['بر خیابان','حیاط','انباری','آب مستقل','برق مستقل','گاز مستقل','تلفن ثابت'],
+    other:['آب مستقل','برق مستقل','گاز مستقل','تلفن ثابت','دوربین مداربسته']
+  };
+  let details='';
+  let structural='';
+  if(isDemand){
+    details += numberInput('details.areaMin','حداقل متراژ (مترمربع)','مثلاً ۷۰');
+    details += numberInput('details.areaMax','حداکثر متراژ (مترمربع)','مثلاً ۱۲۰');
+    if(isLand||isVilla||isOld){
+      details += numberInput('details.landAreaMin','حداقل مساحت زمین (مترمربع)','');
+      details += numberInput('details.landAreaMax','حداکثر مساحت زمین (مترمربع)','');
+      details += numberInput('details.frontageMin','حداقل بر (متر)','');
+    }
+    if(isApartment||isVilla||isOld||isOffice) details += numberInput('details.bedroomsMin','حداقل تعداد خواب / اتاق','مثلاً ۲');
+    if(isIndustrial) details += numberInput('details.ceilingHeightMin','حداقل ارتفاع سقف (متر)','');
+    structural=facilityChecks(typeFacilities[type]||typeFacilities.other,'امکانات و ویژگی‌های موردنیاز');
+  } else {
+    if(!isLand) details += numberInput('details.area','متراژ بنا / واحد (مترمربع)','مثلاً ۱۰۰');
+    if(isLand||isVilla||isOld||isIndustrial) details += numberInput('details.landArea','مساحت زمین (مترمربع)','');
+    if(isApartment||isVilla||isCommercial||isOffice||isOld) details += numberInput('details.constructionYear','سال ساخت','مثلاً ۱۴۰۰');
+    if(isApartment||isOffice||isOld) {
+      details += numberInput('details.floorNumber','طبقه واحد','');
+      details += numberInput('details.totalFloors','تعداد کل طبقات','');
+      details += numberInput('details.unitCount','تعداد کل واحدهای ساختمان','');
+    }
+    if(isApartment||isVilla||isOld||isOffice) details += numberInput('details.bedrooms','تعداد خواب / اتاق','');
+    if(isLand||isVilla||isCommercial||isIndustrial||isOld) details += numberInput('details.frontage','عرض بر (متر)','');
+    if(isLand||isOld) details += numberInput('details.depth','عمق زمین (متر)','');
+    if(isApartment||isVilla||isOffice||isCommercial) {
+      if(isApartment||isOffice) details += booleanSelect('details.elevator','آسانسور');
+      if(!isVilla) {
+        details += `<div class="field"><label>نوع پارکینگ</label><select data-path="details.parkingType">${[['none','ندارد'],['exclusive','اختصاصی'],['shared','مشاع'],['yard','حیاطی'],['problem','مزاحم / مشکل‌دار']].map(([v,l])=>`<option value="${v}" ${(state.details.parkingType||'none')===v?'selected':''}>${l}</option>`).join('')}</select></div>`;
+        details += booleanSelect('details.storage','انباری');
+      }
+      if(isApartment||isOffice||isCommercial) details += booleanSelect('details.directLight','نور مستقیم');
+    }
+    if(isVilla) {
+      details += booleanSelect('details.yard','حیاط');
+      details += booleanSelect('details.pool','استخر');
+      details += booleanSelect('details.heating','سیستم گرمایش');
+      details += booleanSelect('details.cooling','سیستم سرمایش');
+    }
+    if(isLand||isIndustrial||isOld) {
+      details += selectInput('details.documentStatus','وضعیت سند',[['six_dang','شش‌دانگ'],['single_page','تک‌برگ'],['deed','سند دفترچه‌ای'],['contract','قولنامه‌ای'],['endowment','اوقافی'],['other','سایر / نیازمند بررسی']]);
+    }
+    if(isCommercial) details += textInput('details.businessType','نوع فعالیت / صنف مناسب','');
+    if(isIndustrial) {
+      details += numberInput('details.ceilingHeight','ارتفاع سقف (متر)','');
+      details += numberInput('details.powerCapacity','ظرفیت برق (کیلووات)','');
+    }
+    structural=facilityChecks(typeFacilities[type]||typeFacilities.other,'امکانات و ویژگی‌های ملک');
+  }
+  const headline=isDemand?'مشخصات ملک موردنظر':'مشخصات ملک';
+  return `<h2 class="step-title">${headline}</h2>
+    <p class="step-help">نوع ملک و کاربری را انتخاب کنید. فیلدهای زیر بر اساس نوع ملک تغییر می‌کنند؛ اطلاعاتی که در این مرحله پنهان می‌شوند در پیش‌نویس حفظ خواهند شد.</p>
+    <div class="field-grid">${selectInput('property.propertyType','نوع ملک',propertyTypes)}${selectInput('property.usageType','نوع کاربری',usageTypes)}${details}${structural}</div>
+    <div class="info-strip">فیلدهای تخصصی این مرحله در کنار مشخصات پایه ذخیره می‌شوند. فهرست امکانات و فیلدها در مراحل بعد از بخش تنظیمات قابل شخصی‌سازی خواهد شد.</div>`;
 }
 function renderLocationStep(){
   return `<h2 class="step-title">موقعیت ${isDemand?'موردنظر':'ملک'}</h2><p class="step-help">نشانی را تا حد امکان دقیق وارد کنید. ساختار رسمی استان، شهرستان، شهر، منطقه، محله و معابر در بخش مدیریت موقعیت‌ها قابل تکمیل خواهد بود.</p><div class="field-grid">${textInput('location.province','استان','مثلاً سمنان')}${textInput('location.county','شهرستان','مثلاً گرمسار')}${textInput('location.city','شهر','مثلاً گرمسار')}${textInput('location.district','منطقه / ناحیه','')}${textInput('location.neighborhood','محله','')}${isDemand?'':textInput('location.street','خیابان / بلوار','')}${isDemand?'':textInput('location.address','نشانی و پلاک','',true)}</div>`;
@@ -178,8 +250,14 @@ async function init(){
     if(saved){draftId=saved.id;state={...state,...saved.payload};currentStep=Math.max(0,Math.min(5,Number(saved.step)||0));}
   }
   renderStep();
-  $('#stepContent').addEventListener('input',event=>updateFromControl(event.target));
-  $('#stepContent').addEventListener('change',event=>updateFromControl(event.target));
+  const handleFieldChange=event=>{
+    const target=event.target;
+    const refresh=target.dataset.path==='property.propertyType'||target.dataset.path==='property.usageType';
+    updateFromControl(target);
+    if(refresh&&currentStep===1) renderStep();
+  };
+  $('#stepContent').addEventListener('input',handleFieldChange);
+  $('#stepContent').addEventListener('change',handleFieldChange);
   $('#stepContent').addEventListener('click',event=>{
     const choice=event.target.closest('[data-choice]');
     if(choice){state.transactionType=choice.dataset.choice;renderStep();scheduleSave();}
