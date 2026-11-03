@@ -14,5 +14,9 @@ contextBridge.exposeInMainWorld('AmlakDesktop', {
   locationLevelLabels: () => ipcRenderer.invoke('locations:levels'),
   listLocationCatalog: includeInactive => ipcRenderer.invoke('locations:list-all', includeInactive),
   saveLocation: input => ipcRenderer.invoke('locations:save', input),
-  setLocationActive: (id, active) => ipcRenderer.invoke('locations:set-active', { id, active })
+  setLocationActive: (id, active) => ipcRenderer.invoke('locations:set-active', { id, active }),
+  openCustomFieldManager: () => ipcRenderer.invoke('open-custom-field-manager'),
+  listCustomFields: (entityType, includeInactive=false) => ipcRenderer.invoke('fields:list', { entityType, includeInactive }),
+  saveCustomField: input => ipcRenderer.invoke('fields:save', input),
+  setCustomFieldActive: (id, active) => ipcRenderer.invoke('fields:set-active', { id, active })
 });
