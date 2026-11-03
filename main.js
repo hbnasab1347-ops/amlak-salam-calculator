@@ -5,7 +5,7 @@ const { autoUpdater } = require('electron-updater');
 const database = require('./app/database');
 
 let mainWindow;
-const allowedLocalPages = new Set(['launcher.html', 'desktop-home.html', 'index.html', 'record-entry.html']);
+const allowedLocalPages = new Set(['launcher.html', 'desktop-home.html', 'index.html', 'record-entry.html', 'location-management.html']);
 
 function attachSafeLocalWindowHandler(window) {
   window.webContents.on('did-create-window', childWindow => {
@@ -122,6 +122,36 @@ function registerIpcHandlers() {
     if (!['property', 'demand', 'drafts'].includes(type)) throw new Error('بخش درخواستی معتبر نیست.');
     createRecordWindow(type);
     return { opened: true };
+  });
+
+  ipcMain.handle('open-location-manager', event => {
+    if (!trustedRenderer(event, ['desktop-home.html'])) throw new Error('درخواست از صفحه مجاز ارسال نشده است.');
+    const window = new BrowserWindow({
+      width: 1280, height: 900, minWidth: 960, minHeight: 680,
+      title: 'مدیریت موقعیت‌ها | املاک سلام',
+      icon: path.join(__dirname, 'build-icon.ico'), autoHideMenuBar: true,
+      webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
+    });
+    attachSafeLocalWindowHandler(window);
+    window.loadFile(path.join(__dirname, 'app', 'location-management.html'));
+    return { opened: true };
+  });
+
+  ipcMain.handle('locations:levels', event => {
+    if (!trustedRenderer(event, ['location-management.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.locationLevelLabels();
+  });
+  ipcMain.handle('locations:list-all', (event, includeInactive) => {
+    if (!trustedRenderer(event, ['location-management.html', 'record-entry.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.listLocationCatalog(Boolean(includeInactive));
+  });
+  ipcMain.handle('locations:save', (event, input) => {
+    if (!trustedRenderer(event, ['location-management.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.saveLocation(input);
+  });
+  ipcMain.handle('locations:set-active', (event, input) => {
+    if (!trustedRenderer(event, ['location-management.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.setLocationActive(input && input.id, input && input.active);
   });
 
   ipcMain.handle('records:save-draft', (event, input) => {
