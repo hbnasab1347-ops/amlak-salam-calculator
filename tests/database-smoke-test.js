@@ -43,6 +43,7 @@ async function main() {
     assert.deepStrictEqual(propertyFields[0].transactionTypes,['sale']);
     assert.strictEqual(database.listCustomFields('demand',false).length,0);
     assert.strictEqual(database.listCustomFields('all',false).length,1);
+    assert.strictEqual(database.listCustomFields('all',true).length,1);
     assert.throws(()=>database.saveCustomField({entityType:'property',key:'bad key',label:'شناسه نامعتبر',fieldType:'text'}),/شناسه/);
     assert.throws(()=>database.saveCustomField({entityType:'property',key:'choice_field',label:'گزینه',fieldType:'select',options:[]}),/گزینه/);
     database.setCustomFieldActive(propertyFields[0].id,false);
