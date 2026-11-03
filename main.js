@@ -1,60 +1,62 @@
-const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
 
 let mainWindow;
-let calculatorWindow;
+const allowedLocalPages = new Set(['launcher.html', 'desktop-home.html', 'index.html']);
 
-function secureWindowOptions(width, height, minWidth, minHeight) {
-  return {
-    width,
-    height,
-    minWidth,
-    minHeight,
+function attachSafeLocalWindowHandler(window) {
+  window.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const target = new URL(url);
+      const page = path.basename(decodeURIComponent(target.pathname));
+      if (target.protocol !== 'file:' || !allowedLocalPages.has(page)) {
+        return { action: 'deny' };
+      }
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          width: 1180,
+          height: 820,
+          minWidth: 900,
+          minHeight: 650,
+          autoHideMenuBar: true,
+          webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true
+          }
+        }
+      };
+    } catch (error) {
+      console.error('Blocked invalid child window URL:', error.message);
+      return { action: 'deny' };
+    }
+  });
+}
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1180,
+    height: 820,
+    minWidth: 900,
+    minHeight: 650,
+    title: 'املاک سلام',
+    icon: path.join(__dirname, 'build-icon.ico'),
     autoHideMenuBar: true,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true
     }
-  };
-}
-
-function createCalculatorWindow() {
-  if (calculatorWindow && !calculatorWindow.isDestroyed()) {
-    calculatorWindow.focus();
-    return calculatorWindow;
-  }
-
-  calculatorWindow = new BrowserWindow({
-    ...secureWindowOptions(1100, 850, 900, 650),
-    title: 'محاسبه‌گر مستقل املاک سلام',
-    icon: path.join(__dirname, 'build-icon.ico')
   });
 
-  calculatorWindow.loadFile(path.join(__dirname, 'index.html'));
-  calculatorWindow.on('closed', () => { calculatorWindow = null; });
-  return calculatorWindow;
+  attachSafeLocalWindowHandler(mainWindow);
+  mainWindow.loadFile(path.join(__dirname, 'launcher.html'));
 }
-
-function createMainWindow() {
-  mainWindow = new BrowserWindow({
-    ...secureWindowOptions(1280, 850, 1000, 680),
-    title: 'سامانه جامع املاک سلام',
-    icon: path.join(__dirname, 'build-icon.ico')
-  });
-
-  mainWindow.loadFile(path.join(__dirname, 'desktop-home.html'));
-}
-
-ipcMain.handle('open-calculator', () => {
-  createCalculatorWindow();
-  return true;
-});
 
 app.whenReady().then(() => {
-  createMainWindow();
+  createWindow();
 
   if (app.isPackaged) {
     autoUpdater.checkForUpdatesAndNotify().catch(err =>
@@ -63,7 +65,7 @@ app.whenReady().then(() => {
   }
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
