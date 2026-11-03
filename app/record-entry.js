@@ -142,7 +142,21 @@ function renderPropertyStep(){
     <div class="info-strip">فیلدهای تخصصی این مرحله در کنار مشخصات پایه ذخیره می‌شوند. فهرست امکانات و فیلدها در مراحل بعد از بخش تنظیمات قابل شخصی‌سازی خواهد شد.</div>`;
 }
 function renderLocationStep(){
-  return `<h2 class="step-title">موقعیت ${isDemand?'موردنظر':'ملک'}</h2><p class="step-help">نشانی را تا حد امکان دقیق وارد کنید. ساختار رسمی استان، شهرستان، شهر، منطقه، محله و معابر در بخش مدیریت موقعیت‌ها قابل تکمیل خواهد بود.</p><div class="field-grid">${textInput('location.province','استان','مثلاً سمنان')}${textInput('location.county','شهرستان','مثلاً گرمسار')}${textInput('location.city','شهر','مثلاً گرمسار')}${textInput('location.district','منطقه / ناحیه','')}${textInput('location.neighborhood','محله','')}${isDemand?'':textInput('location.street','خیابان / بلوار','')}${isDemand?'':textInput('location.address','نشانی و پلاک','',true)}</div>`;
+  return `<h2 class="step-title">موقعیت ${isDemand?'موردنظر':'ملک'}</h2>
+    <p class="step-help">نشانی را به ترتیب سلسله‌مراتب وارد کنید. نام رسمی در فیلد اصلی و نام متداول در فیلد جداگانه ثبت می‌شود تا در معرفی بعدی بتوان آن‌ها را به شکل «نام رسمی (نام رایج)» نمایش داد.</p>
+    <div class="field-grid">
+      ${textInput('location.province','استان','مثلاً سمنان')}
+      ${textInput('location.county','شهرستان','مثلاً گرمسار')}
+      ${textInput('location.city','نام رسمی شهر','مثلاً گرمسار')}
+      ${textInput('location.cityCommon','نام متداول شهر (اختیاری)','در صورت تفاوت با نام رسمی')}
+      ${textInput('location.district','منطقه / ناحیه','')}
+      ${textInput('location.neighborhood','نام رسمی محله','')}
+      ${textInput('location.neighborhoodCommon','نام رایج محله (اختیاری)','')}
+      ${textInput('location.street','نام رسمی خیابان / بلوار / روستا','')}
+      ${textInput('location.streetCommon','نام متداول معبر (اختیاری)','')}
+      ${textInput('location.address','نشانی، پلاک یا توضیح تکمیلی','',true)}
+    </div>
+    <div class="info-strip">در این نسخه، موقعیت‌ها به‌صورت ساختاریافته در پرونده ذخیره می‌شوند؛ فهرست مرجع و انتخاب آبشاری مناطق، محله‌ها و معابر گرمسار پس از دریافت و تأیید فهرست رسمی/محلی در بخش مدیریت موقعیت‌ها ساخته خواهد شد.</div>`;
 }
 function renderPricingStep(){
   if(isDemand){
