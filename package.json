@@ -1,7 +1,7 @@
 {
   "name": "amlak-salam-calculator",
   "version": "1.0.0",
-  "description": "محاسبه‌گر املاک سلام",
+  "description": "سامانه جامع املاک سلام به‌همراه محاسبه‌گر مستقل",
   "main": "main.js",
   "author": "Amlak Salam",
   "license": "UNLICENSED",
@@ -19,16 +19,43 @@
   },
   "build": {
     "appId": "ir.amlaaksalam.calculator.windows",
-    "productName": "محاسبه‌گر املاک سلام",
-    "directories": { "output": "dist", "buildResources": "build" },
-"files": ["main.js", "preload.js", "desktop-home.html", "index.html", "build-icon.ico", "package.json"],    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "build-icon.ico" },
+    "productName": "املاک سلام",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "launcher.html",
+      "desktop-home.html",
+      "index.html",
+      "build-icon.ico",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build-icon.ico"
+    },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "محاسبه‌گر املاک سلام"
+      "shortcutName": "املاک سلام"
     },
-    "publish": [{ "provider": "github", "owner": "hbnasab1347-ops", "repo": "amlak-salam-calculator" }]
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "hbnasab1347-ops",
+        "repo": "amlak-salam-calculator"
+      }
+    ]
   }
 }
