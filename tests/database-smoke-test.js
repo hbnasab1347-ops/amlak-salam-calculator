@@ -55,12 +55,14 @@ async function main() {
     const draft = database.saveDraft({
       type: 'property',
       step: 2,
-      payload: { transactionType: 'sale', property: { propertyType: 'apartment' }, details: { frontage: 6.5, documentStatus: 'six_dang', facilities: ['بر خیابان'] } }
+      payload: { transactionType: 'sale', property: { propertyType: 'apartment' }, details: { frontage: 6.5, documentStatus: 'six_dang', facilities: ['بر خیابان'] }, customFields:{property:{passage_width:8.5,has_water:true}} }
     });
     assert.ok(draft.id);
     assert.strictEqual(database.getDraft(draft.id).step, 2);
     assert.strictEqual(database.getDraft(draft.id).payload.details.frontage, 6.5);
     assert.deepStrictEqual(database.getDraft(draft.id).payload.details.facilities, ['بر خیابان']);
+    assert.strictEqual(database.getDraft(draft.id).payload.customFields.property.passage_width,8.5);
+    assert.strictEqual(database.getDraft(draft.id).payload.customFields.property.has_water,true);
     assert.strictEqual(database.listDrafts().length, 1);
 
     const property = database.submitRecord({
