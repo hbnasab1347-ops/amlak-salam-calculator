@@ -38,7 +38,7 @@
 <div class="toast" id="toast"></div>
 <script>
 const modules=['ثبت ملک','ثبت تقاضا','مدیریت ارباب‌رجوع','بایگانی ملک','بایگانی تقاضا','پیش‌نویس‌ها','سطل زباله','آگهی‌شده‌ها','قراردادها','مدیریت سازمان و شعب','محاسبه‌گرها','پیگیری و یادآوری','گزارش‌ها','حسابداری','تنظیمات و شخصی‌سازی'];
-const symbols=['⊕','⌕','♙','▣','▤','✎','♲','◉','✒','⌂','∑','◷','▥','＄','⚙'];
+const symbols=['🏠','📝','👥','🗂️','📥','💾','🗑️','📢','📄','🏢','🧮','🔔','📊','💰','⚙️'];
 const nav=document.getElementById('navlist'),modal=document.getElementById('modalback');
 modules.forEach((name,i)=>{const b=document.createElement('button');b.className='navitem';b.innerHTML='<span class="ico">'+symbols[i]+'</span><span>'+(i+1)+'. '+name+'</span>';b.addEventListener('click',()=>openModule(name));nav.appendChild(b)});
 function openModule(name){if(name==='محاسبه‌گرها'){openCalculator();return;}document.getElementById('modalTitle').textContent=name;document.getElementById('modalText').textContent='بخش «'+name+'» در نقشه اجرایی نرم‌افزار جامع املاک سلام قرار دارد. فرم‌ها، دسترسی‌ها و ارتباط با سایر بخش‌ها در مراحل بعدی به‌صورت واقعی پیاده‌سازی می‌شوند.';document.getElementById('markRead').style.display='none';modal.style.display='flex';}
