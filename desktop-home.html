@@ -41,7 +41,19 @@ const modules=['ثبت ملک','ثبت تقاضا','مدیریت ارباب‌ر
 const symbols=['🏠','📝','👥','🗂️','📥','💾','🗑️','📢','📄','🏢','🧮','🔔','📊','💰','⚙️'];
 const nav=document.getElementById('navlist'),modal=document.getElementById('modalback');
 modules.forEach((name,i)=>{const b=document.createElement('button');b.className='navitem';b.innerHTML='<span class="ico">'+symbols[i]+'</span><span>'+(i+1)+'. '+name+'</span>';b.addEventListener('click',()=>openModule(name));nav.appendChild(b)});
-function openModule(name){if(name==='محاسبه‌گرها'){openCalculator();return;}document.getElementById('modalTitle').textContent=name;document.getElementById('modalText').textContent='بخش «'+name+'» در نقشه اجرایی نرم‌افزار جامع املاک سلام قرار دارد. فرم‌ها، دسترسی‌ها و ارتباط با سایر بخش‌ها در مراحل بعدی به‌صورت واقعی پیاده‌سازی می‌شوند.';document.getElementById('markRead').style.display='none';modal.style.display='flex';}
+function openModule(name){
+ if(name==='محاسبه‌گرها'){openCalculator();return;}
+ const routes={'ثبت ملک':'property','ثبت تقاضا':'demand','پیش‌نویس‌ها':'drafts'};
+ if(routes[name]){
+  if(window.AmlakDesktop&&typeof window.AmlakDesktop.openRecordEntry==='function'){
+   window.AmlakDesktop.openRecordEntry(routes[name]).catch(error=>toast(error.message||'امکان باز کردن فرم وجود ندارد.'));
+  }else{toast('فرم ثبت در این محیط قابل اجرا نیست.');}
+  return;
+ }
+ document.getElementById('modalTitle').textContent=name;
+ document.getElementById('modalText').textContent='بخش «'+name+'» در نقشه اجرایی نرم‌افزار جامع املاک سلام قرار دارد. در این مرحله، هسته ثبت ملک، ثبت تقاضا و پیش‌نویس‌ها فعال شده است؛ سایر بخش‌ها در مراحل بعدی متصل می‌شوند.';
+ document.getElementById('markRead').style.display='none';modal.style.display='flex';
+}
 document.getElementById('closeModal').onclick=()=>modal.style.display='none';modal.addEventListener('click',e=>{if(e.target===modal)modal.style.display='none'});
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',2400)}
 document.getElementById('bgBtn').onclick=()=>document.getElementById('bgFile').click();
