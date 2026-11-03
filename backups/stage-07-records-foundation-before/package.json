@@ -1,0 +1,62 @@
+{
+  "name": "amlak-salam-calculator",
+  "version": "1.0.0",
+  "description": "نسخه آزمایشی سامانه جامع املاک سلام به‌همراه محاسبه‌گر مستقل",
+  "main": "main.js",
+  "author": "Amlak Salam",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis",
+    "publish": "electron-builder --win nsis --publish always"
+  },
+  "devDependencies": {
+    "electron": "45.2.1",
+    "electron-builder": "26.18.0"
+  },
+  "dependencies": {
+    "electron-updater": "6.8.11"
+  },
+  "build": {
+    "appId": "ir.amlaaksalam.test",
+    "productName": "املاک سلام آزمایشی",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "launcher.html",
+      "desktop-home.html",
+      "index.html",
+      "build-icon.ico",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build-icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "املاک سلام آزمایشی"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "hbnasab1347-ops",
+        "repo": "amlak-salam-calculator"
+      }
+    ],
+    "executableName": "AmlakSalam-Test"
+  }
+}
