@@ -7,7 +7,6 @@ on:
       - 'package.json'
       - 'main.js'
       - 'preload.js'
-      - 'desktop-home.html'
       - 'app/**'
       - 'launcher.html'
       - 'desktop-home.html'
@@ -38,6 +37,6 @@ jobs:
       - name: بارگذاری فایل نصب
         uses: actions/upload-artifact@v4
         with:
-          name: Amlak-Salam-Windows-Installer
+          name: Amlak-Salam-Test-Windows-Installer
           path: dist/*.exe
           if-no-files-found: error
