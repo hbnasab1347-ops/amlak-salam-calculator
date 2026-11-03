@@ -82,6 +82,17 @@ async function initialize(userDataPath) {
   db.run('PRAGMA foreign_keys = ON;');
   const schemaPath = path.join(__dirname, 'schema.sql');
   db.run(fs.readFileSync(schemaPath, 'utf8'));
+  const fieldColumns = db.exec("PRAGMA table_info(field_definitions)")[0]?.values?.map(row => row[1]) || [];
+  const fieldMigrations = [
+    ['transaction_types_json', "TEXT NOT NULL DEFAULT '[]'"],
+    ['property_types_json', "TEXT NOT NULL DEFAULT '[]'"],
+    ['usage_types_json', "TEXT NOT NULL DEFAULT '[]'"],
+    ['help_text', "TEXT NOT NULL DEFAULT ''"]
+  ];
+  for (const [column, definition] of fieldMigrations) {
+    if (!fieldColumns.includes(column)) db.run('ALTER TABLE field_definitions ADD COLUMN ' + column + ' ' + definition);
+  }
+  db.run('CREATE INDEX IF NOT EXISTS idx_field_definitions_scope ON field_definitions(entity_type,is_active,sort_order)');
   persist();
   return { database: path.basename(dbPath), schemaVersion: one("SELECT value FROM app_meta WHERE key='schema_version'").value };
 }
@@ -316,4 +327,55 @@ function dashboardStats() {
   };
 }
 
-module.exports = { initialize, saveDraft, listDrafts, getDraft, deleteDraft, submitRecord, listRecords, dashboardStats, listLocations, listLocationChildren, listLocationCatalog, saveLocation, setLocationActive, locationLevelLabels };
+
+const CUSTOM_FIELD_TYPES = ['text','number','textarea','select','checkbox','multi'];
+function listCustomFields(entityType = 'property', includeInactive = false) {
+  if (!['property','demand'].includes(entityType)) throw new Error('نوع پرونده معتبر نیست.');
+  return many(`SELECT id,entity_type AS entityType,field_key AS fieldKey,label,field_type AS fieldType,
+    options_json AS optionsJson,is_required AS isRequired,is_active AS isActive,sort_order AS sortOrder,
+    transaction_types_json AS transactionTypesJson,property_types_json AS propertyTypesJson,
+    usage_types_json AS usageTypesJson,help_text AS helpText
+    FROM field_definitions WHERE entity_type=? ${includeInactive ? '' : 'AND is_active=1'}
+    ORDER BY sort_order,label COLLATE NOCASE`, [entityType]).map(row => ({
+      ...row, isRequired:Boolean(row.isRequired), isActive:Boolean(row.isActive),
+      options:JSON.parse(row.optionsJson || '[]'),
+      transactionTypes:JSON.parse(row.transactionTypesJson || '[]'),
+      propertyTypes:JSON.parse(row.propertyTypesJson || '[]'),
+      usageTypes:JSON.parse(row.usageTypesJson || '[]')
+    }));
+}
+function saveCustomField(input = {}) {
+  const id=asText(input.id), entityType=asText(input.entityType), key=asText(input.key), label=asText(input.label);
+  const fieldType=asText(input.fieldType), options=Array.isArray(input.options)?input.options.map(asText).filter(Boolean):[];
+  if(!['property','demand'].includes(entityType)) throw new Error('نوع پرونده معتبر نیست.');
+  if(!/^[a-z][a-z0-9_]{1,49}$/.test(key)) throw new Error('شناسه باید انگلیسی، با حروف کوچک و بدون فاصله باشد.');
+  if(!label || label.length>80) throw new Error('عنوان فیلد را درست وارد کنید.');
+  if(!CUSTOM_FIELD_TYPES.includes(fieldType)) throw new Error('نوع ورودی معتبر نیست.');
+  if(['select','multi'].includes(fieldType) && (!options.length || options.length>60)) throw new Error('برای این نوع فیلد حداقل یک گزینه لازم است.');
+  if(options.some(x=>x.length>80)) throw new Error('طول هر گزینه حداکثر ۸۰ نویسه است.');
+  const arrays=['transactionTypes','propertyTypes','usageTypes'];
+  const clean={};
+  for(const k of arrays){clean[k]=Array.isArray(input[k])?input[k].map(asText).filter(Boolean):[];if(clean[k].length>30)throw new Error('تعداد شرط‌های نمایش بیش از حد مجاز است.');}
+  const values=[entityType,key,label,fieldType,JSON.stringify(options),input.isRequired?1:0,Math.max(0,Math.min(9999,asInteger(input.sortOrder)||0)),JSON.stringify(clean.transactionTypes),JSON.stringify(clean.propertyTypes),JSON.stringify(clean.usageTypes),asText(input.helpText)];
+  if(id){
+    if(!one('SELECT id FROM field_definitions WHERE id=?',[id])) throw new Error('فیلد موردنظر پیدا نشد.');
+    const duplicate=one('SELECT id FROM field_definitions WHERE entity_type=? AND field_key=? AND id<>?',[entityType,key,id]);
+    if(duplicate) throw new Error('این شناسه قبلاً برای این نوع پرونده استفاده شده است.');
+    run(`UPDATE field_definitions SET entity_type=?,field_key=?,label=?,field_type=?,options_json=?,is_required=?,sort_order=?,
+      transaction_types_json=?,property_types_json=?,usage_types_json=?,help_text=? WHERE id=?`,[...values,id]);
+  }else{
+    if(one('SELECT id FROM field_definitions WHERE entity_type=? AND field_key=?',[entityType,key])) throw new Error('این شناسه قبلاً تعریف شده است.');
+    run(`INSERT INTO field_definitions(id,entity_type,field_key,label,field_type,options_json,is_required,is_active,sort_order,created_at,
+      transaction_types_json,property_types_json,usage_types_json,help_text) VALUES(?,?,?,?,?,?,?,1,?,?, ?,?,?,?)`,
+      [makeId(),entityType,key,label,fieldType,JSON.stringify(options),input.isRequired?1:0,values[6],now(),values[7],values[8],values[9],values[10]]);
+  }
+  persist(); return {saved:true};
+}
+function setCustomFieldActive(id, active) {
+  const fieldId=asText(id);
+  if(!one('SELECT id FROM field_definitions WHERE id=?',[fieldId])) throw new Error('فیلد پیدا نشد.');
+  run('UPDATE field_definitions SET is_active=? WHERE id=?',[active?1:0,fieldId]);persist();
+  return {id:fieldId,isActive:Boolean(active)};
+}
+
+module.exports = { listCustomFields, saveCustomField, setCustomFieldActive, initialize, saveDraft, listDrafts, getDraft, deleteDraft, submitRecord, listRecords, dashboardStats, listLocations, listLocationChildren, listLocationCatalog, saveLocation, setLocationActive, locationLevelLabels };
