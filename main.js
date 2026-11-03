@@ -1,30 +1,60 @@
-const { app, BrowserWindow, Menu, dialog } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
 
 let mainWindow;
+let calculatorWindow;
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1180,
-    height: 820,
-    minWidth: 900,
-    minHeight: 650,
-    title: 'محاسبه‌گر املاک سلام',
-    icon: path.join(__dirname, 'build-icon.ico'),
+function secureWindowOptions(width, height, minWidth, minHeight) {
+  return {
+    width,
+    height,
+    minWidth,
+    minHeight,
     autoHideMenuBar: true,
     webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true
     }
-  });
-
-  mainWindow.loadFile(path.join(__dirname, 'index.html'));
+  };
 }
 
+function createCalculatorWindow() {
+  if (calculatorWindow && !calculatorWindow.isDestroyed()) {
+    calculatorWindow.focus();
+    return calculatorWindow;
+  }
+
+  calculatorWindow = new BrowserWindow({
+    ...secureWindowOptions(1100, 850, 900, 650),
+    title: 'محاسبه‌گر مستقل املاک سلام',
+    icon: path.join(__dirname, 'build-icon.ico')
+  });
+
+  calculatorWindow.loadFile(path.join(__dirname, 'index.html'));
+  calculatorWindow.on('closed', () => { calculatorWindow = null; });
+  return calculatorWindow;
+}
+
+function createMainWindow() {
+  mainWindow = new BrowserWindow({
+    ...secureWindowOptions(1280, 850, 1000, 680),
+    title: 'سامانه جامع املاک سلام',
+    icon: path.join(__dirname, 'build-icon.ico')
+  });
+
+  mainWindow.loadFile(path.join(__dirname, 'desktop-home.html'));
+}
+
+ipcMain.handle('open-calculator', () => {
+  createCalculatorWindow();
+  return true;
+});
+
 app.whenReady().then(() => {
-  createWindow();
+  createMainWindow();
 
   if (app.isPackaged) {
     autoUpdater.checkForUpdatesAndNotify().catch(err =>
@@ -33,7 +63,7 @@ app.whenReady().then(() => {
   }
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
   });
 });
 
