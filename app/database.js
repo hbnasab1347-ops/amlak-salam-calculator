@@ -240,6 +240,13 @@ function listLocations(parentId = null, includeInactive = false) {
     FROM locations WHERE ${where.join(' AND ')} ORDER BY sort_order,official_name COLLATE NOCASE`, params);
 }
 
+function listLocationCatalog(includeInactive = false) {
+  const where = includeInactive ? '' : 'WHERE is_active=1';
+  return many(`SELECT id,parent_id AS parentId,level,official_name AS officialName,
+    common_name AS commonName,is_active AS isActive,sort_order AS sortOrder,created_at AS createdAt
+    FROM locations ${where} ORDER BY level,sort_order,official_name COLLATE NOCASE`);
+}
+
 function listLocationChildren(parentId, includeInactive = false) {
   const where = ['parent_id=?'];
   const params = [asText(parentId)];
@@ -309,4 +316,4 @@ function dashboardStats() {
   };
 }
 
-module.exports = { initialize, saveDraft, listDrafts, getDraft, deleteDraft, submitRecord, listRecords, dashboardStats, listLocations, listLocationChildren, saveLocation, setLocationActive, locationLevelLabels };
+module.exports = { initialize, saveDraft, listDrafts, getDraft, deleteDraft, submitRecord, listRecords, dashboardStats, listLocations, listLocationChildren, listLocationCatalog, saveLocation, setLocationActive, locationLevelLabels };
