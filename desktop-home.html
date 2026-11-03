@@ -34,7 +34,7 @@
 </footer>
 </div>
 <input class="fileinput" type="file" id="bgFile" accept="image/*"><input class="fileinput" type="file" id="logoFile" accept="image/*">
-<div class="modalback" id="modalback"><section class="modal"><h2 id="modalTitle">بخش انتخاب‌شده</h2><p id="modalText">این بخش در مرحله بعدی توسعه خواهد یافت.</p><div class="modalfoot"><button class="closebtn" id="closeModal">بستن</button><button class="goldbtn" id="markRead" style="display:none">علامت‌گذاری به‌عنوان خوانده‌شده</button></div></section></div>
+<div class="modalback" id="modalback"><section class="modal"><h2 id="modalTitle">بخش انتخاب‌شده</h2><p id="modalText">این بخش در مرحله بعدی توسعه خواهد یافت.</p><div class="modalfoot"><button class="closebtn" id="closeModal">بستن</button><button class="goldbtn" id="locationManagerBtn" style="display:none">مدیریت موقعیت‌های جغرافیایی</button><button class="goldbtn" id="markRead" style="display:none">علامت‌گذاری به‌عنوان خوانده‌شده</button></div></section></div>
 <div class="toast" id="toast"></div>
 <script>
 const modules=['ثبت ملک','ثبت تقاضا','مدیریت ارباب‌رجوع','بایگانی ملک','بایگانی تقاضا','پیش‌نویس‌ها','سطل زباله','آگهی‌شده‌ها','قراردادها','مدیریت سازمان و شعب','محاسبه‌گرها','پیگیری و یادآوری','گزارش‌ها','حسابداری','تنظیمات و شخصی‌سازی'];
@@ -51,10 +51,19 @@ function openModule(name){
   return;
  }
  document.getElementById('modalTitle').textContent=name;
- document.getElementById('modalText').textContent='بخش «'+name+'» در نقشه اجرایی نرم‌افزار جامع املاک سلام قرار دارد. در این مرحله، هسته ثبت ملک، ثبت تقاضا و پیش‌نویس‌ها فعال شده است؛ سایر بخش‌ها در مراحل بعدی متصل می‌شوند.';
- document.getElementById('markRead').style.display='none';modal.style.display='flex';
+ document.getElementById('modalText').textContent=name==='تنظیمات و شخصی‌سازی'
+  ? 'از این قسمت می‌توانید مدیریت موقعیت‌های جغرافیایی را باز کنید. تنظیمات دیگر در مراحل بعدی تکمیل می‌شوند.'
+  : 'بخش «'+name+'» در نقشه اجرایی نرم‌افزار جامع املاک سلام قرار دارد. در این مرحله، هسته ثبت ملک، ثبت تقاضا و پیش‌نویس‌ها فعال شده است؛ سایر بخش‌ها در مراحل بعدی متصل می‌شوند.';
+ document.getElementById('markRead').style.display='none';
+ document.getElementById('locationManagerBtn').style.display=name==='تنظیمات و شخصی‌سازی'?'inline-block':'none';
+ modal.style.display='flex';
 }
-document.getElementById('closeModal').onclick=()=>modal.style.display='none';modal.addEventListener('click',e=>{if(e.target===modal)modal.style.display='none'});
+document.getElementById('closeModal').onclick=()=>modal.style.display='none';
+document.getElementById('locationManagerBtn').onclick=()=>{
+ if(window.AmlakDesktop&&typeof window.AmlakDesktop.openLocationManager==='function'){
+  window.AmlakDesktop.openLocationManager().then(()=>modal.style.display='none').catch(error=>toast(error.message||'امکان باز کردن مدیریت موقعیت‌ها وجود ندارد.'));
+ }else{toast('مدیریت موقعیت‌ها در این محیط قابل اجرا نیست.')}
+};modal.addEventListener('click',e=>{if(e.target===modal)modal.style.display='none'});
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',2400)}
 document.getElementById('bgBtn').onclick=()=>document.getElementById('bgFile').click();
 document.getElementById('bgFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f);document.getElementById('scene').style.background='linear-gradient(#17191b22,#17191b22),url("'+u+'") center/cover';toast('پس‌زمینه میزکار تغییر کرد.')};
