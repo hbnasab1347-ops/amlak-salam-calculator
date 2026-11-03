@@ -261,7 +261,7 @@ async function init(){
   }
   if(draftToLoad){
     const saved=await api.getDraft(draftToLoad);
-    if(saved){draftId=saved.id;state={...state,...saved.payload};currentStep=Math.max(0,Math.min(5,Number(saved.step)||0));}
+    if(saved){const p=saved.payload||{};draftId=saved.id;state={...state,...p,property:{...state.property,...p.property},location:{...state.location,...p.location},details:{...state.details,...p.details,facilities:Array.isArray(p.details?.facilities)?p.details.facilities:[]},pricing:{...state.pricing,...p.pricing},conditions:{...state.conditions,...p.conditions},contact:{...state.contact,...p.contact},notes:{...state.notes,...p.notes}};currentStep=Math.max(0,Math.min(5,Number(saved.step)||0));}
   }
   renderStep();
   const handleFieldChange=event=>{
