@@ -281,7 +281,7 @@ function validateStep(){
   if(currentStep===0 && !state.transactionType){toast('ابتدا نوع معامله یا تقاضا را انتخاب کنید.');return false;}
   if(currentStep===1 && (!state.property.propertyType || !state.property.usageType)){toast('نوع ملک و کاربری را مشخص کنید.');return false;}
   if(currentStep===2 && !state.location.city.trim()){toast('شهر را مشخص کنید.');return false;}
-  if(currentStep===1){const missing=customFieldDefinitions.filter(customFieldVisible).find(field=>field.isRequired&&(()=>{const v=state.customFields?.[recordType]?.[field.fieldKey];return v==null||v===''||(Array.isArray(v)&&!v.length);})());if(missing){toast('تکمیل فیلد الزامی «'+missing.label+'» ضروری است.');return false;}}
+  if(currentStep===1){const missing=customFieldDefinitions.filter(customFieldVisible).find(field=>field.isRequired&&(()=>{const v=state.customFields?.[recordType]?.[field.fieldKey];return v==null||v===''||(Array.isArray(v)&&!v.length)||(field.fieldType==='checkbox'&&v!==true);})());if(missing){toast('تکمیل فیلد الزامی «'+missing.label+'» ضروری است.');return false;}}
   return true;
 }
 function updateFromControl(target){
