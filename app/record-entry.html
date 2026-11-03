@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:;">
+  <meta name="theme-color" content="#f5f3ee">
+  <title>ثبت پرونده | املاک سلام</title>
+  <link rel="stylesheet" href="record-entry.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">س</span><div><strong>املاک سلام</strong><small>سامانه جامع مدیریت املاک</small></div></div>
+      <div class="topbar-actions"><span class="save-state" id="saveState">آماده ثبت اطلاعات</span><button class="quiet-button" id="closeWindow" type="button">بازگشت به میزکار</button></div>
+    </header>
+    <main class="page-wrap">
+      <section class="page-heading">
+        <div><div class="eyebrow" id="recordEyebrow">پرونده جدید</div><h1 id="pageTitle">ثبت ملک جدید</h1><p id="pageSubtitle">اطلاعات را مرحله‌به‌مرحله وارد کنید؛ پیش‌نویس شما به‌صورت خودکار ذخیره می‌شود.</p></div>
+        <div class="record-code" id="draftLabel">پیش‌نویس جدید</div>
+      </section>
+      <section class="stepper" id="stepper" aria-label="مراحل ثبت"></section>
+      <section class="form-card">
+        <div class="step-content" id="stepContent"></div>
+        <div class="form-footer">
+          <button class="quiet-button" id="cancelButton" type="button">انصراف</button>
+          <div class="footer-actions">
+            <button class="secondary-button" id="previousButton" type="button">مرحله قبل</button>
+            <button class="primary-button" id="nextButton" type="button">مرحله بعد ←</button>
+            <button class="primary-button" id="submitButton" type="button" hidden>ثبت نهایی پرونده</button>
+          </div>
+        </div>
+      </section>
+      <p class="privacy-note"><span>◆</span> قیمت خط قرمز و توضیحات محرمانه فقط در بخش داخلی نرم‌افزار نگهداری می‌شوند و در خلاصه عمومی پرونده نمایش داده نخواهند شد.</p>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="record-entry.js"></script>
+</body>
+</html>
