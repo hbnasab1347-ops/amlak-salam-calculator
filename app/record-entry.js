@@ -103,10 +103,12 @@ function renderPropertyStep(){
     if(!isLand) details += numberInput('details.area','متراژ بنا / واحد (مترمربع)','مثلاً ۱۰۰');
     if(isLand||isVilla||isOld||isIndustrial) details += numberInput('details.landArea','مساحت زمین (مترمربع)','');
     if(isApartment||isVilla||isCommercial||isOffice||isOld) details += numberInput('details.constructionYear','سال ساخت','مثلاً ۱۴۰۰');
-    if(isApartment||isOffice||isOld) {
-      details += numberInput('details.floorNumber','طبقه واحد','');
-      details += numberInput('details.totalFloors','تعداد کل طبقات','');
-      details += numberInput('details.unitCount','تعداد کل واحدهای ساختمان','');
+    if(isApartment||isOffice||isOld||isCommercial) {
+      details += numberInput('details.floorNumber','طبقه واحد / محل تجاری','');
+      if(!isCommercial) {
+        details += numberInput('details.totalFloors','تعداد کل طبقات','');
+        details += numberInput('details.unitCount','تعداد کل واحدهای ساختمان','');
+      }
     }
     if(isApartment||isVilla||isOld||isOffice) details += numberInput('details.bedrooms','تعداد خواب / اتاق','');
     if(isLand||isVilla||isCommercial||isIndustrial||isOld) details += numberInput('details.frontage','عرض بر (متر)','');
