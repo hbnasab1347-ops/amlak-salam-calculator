@@ -147,7 +147,7 @@ function renderPropertyStep(){
     <div class="info-strip">فیلدهای تخصصی این مرحله در کنار مشخصات پایه ذخیره می‌شوند. فهرست امکانات و فیلدها در مراحل بعد از بخش تنظیمات قابل شخصی‌سازی خواهد شد.</div>`;
 }
 function locationSelect(namePath,idPath,label,levels,parentId,commonPath=''){
-  const rows=locationCatalog.filter(x=>levels.includes(x.level)&&x.isActive&&(!parentId||x.parentId===parentId));
+  const rows=locationCatalog.filter(x=>levels.includes(x.level)&&x.isActive&&(parentId?x.parentId===parentId:x.level==='province'));
   if(!rows.length) return textInput(namePath,label,'ابتدا موقعیت‌های معتبر را در مدیریت موقعیت‌ها تعریف کنید.');
   return `<div class="field"><label>${label}</label><select data-path="${idPath}" data-location-name="${namePath}" data-location-common="${commonPath}"><option value="">انتخاب کنید</option>${rows.map(x=>`<option value="${x.id}" ${getPath(idPath)===x.id?'selected':''}>${escapeHtml(x.officialName)}${x.commonName?' ('+escapeHtml(x.commonName)+')':''}</option>`).join('')}</select></div>`;
 }
