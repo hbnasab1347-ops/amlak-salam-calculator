@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مدیریت موقعیت‌ها | املاک سلام</title>
+<link rel="stylesheet" href="location-management.css">
+</head>
+<body>
+<header class="topbar">
+  <div><strong>املاک سلام | مدیریت موقعیت‌ها</strong><small>ساختار سلسله‌مراتبی مکان‌ها برای ثبت ملک و تقاضا</small></div>
+  <button id="backBtn" class="secondary">بازگشت به میزکار</button>
+</header>
+<main class="wrap">
+  <section class="intro">
+    <h1>مدیریت موقعیت‌های جغرافیایی</h1>
+    <p>ابتدا استان و سپس شهرستان، شهر، منطقه، محله و معبر را تعریف کنید. نام رسمی و نام متداول جداگانه نگهداری می‌شوند.</p>
+    <div class="notice">در حال حاضر فهرست گرمسار از پیش وارد نشده است. لطفاً فقط نام‌هایی را ثبت کنید که از صحت آن‌ها اطمینان دارید. حذف دائمی نداریم؛ موقعیت‌ها به‌صورت کنترل‌شده غیرفعال می‌شوند.</div>
+  </section>
+  <div class="layout">
+    <section class="panel">
+      <div class="panel-head"><h2 id="formTitle">افزودن موقعیت جدید</h2><button id="resetBtn" class="link">پاک‌کردن فرم</button></div>
+      <form id="locationForm">
+        <input type="hidden" id="locationId">
+        <label>سطح موقعیت<select id="level" required></select></label>
+        <label>موقعیت بالادستی<select id="parentId"><option value="">بدون والد</option></select><small id="parentHint"></small></label>
+        <label>نام رسمی<input id="officialName" maxlength="100" required placeholder="نام ثبت‌شده و رسمی"></label>
+        <label>نام متداول (اختیاری)<input id="commonName" maxlength="100" placeholder="نامی که مردم بیشتر به کار می‌برند"></label>
+        <label>ترتیب نمایش<input id="sortOrder" type="number" step="1" value="0"></label>
+        <button class="primary" type="submit" id="saveBtn">ذخیره موقعیت</button>
+      </form>
+      <p class="form-help">برای نمونه، نام رسمی شهر را در فیلد اول و نام رایج آن را در فیلد دوم وارد کنید. سطح موقعیت پس از ثبت قابل تغییر نیست.</p>
+    </section>
+    <section class="panel list-panel">
+      <div class="panel-head"><h2>فهرست موقعیت‌های تعریف‌شده</h2><button id="refreshBtn" class="secondary">به‌روزرسانی</button></div>
+      <div class="filters">
+        <input id="search" placeholder="جست‌وجو در نام موقعیت‌ها">
+        <label class="inline"><input type="checkbox" id="showInactive"> نمایش موقعیت‌های غیرفعال</label>
+      </div>
+      <div id="locationList" class="location-list"><div class="empty">در حال دریافت فهرست…</div></div>
+    </section>
+  </div>
+</main>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="location-management.js"></script>
+</body></html>
