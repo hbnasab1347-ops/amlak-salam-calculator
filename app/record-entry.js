@@ -159,8 +159,11 @@ function resetLocationDescendants(path){
     'location.districtId':['neighborhoodId','streetId'],
     'location.neighborhoodId':['streetId']
   };
-  const names={countyId:'county',cityId:'city',districtId:'district',neighborhoodId:'neighborhood',streetId:'street'};
-  (groups[path]||[]).forEach(key=>{state.location[key]='';state.location[names[key]]='';});
+  const names={
+    countyId:['county'],cityId:['city','cityCommon'],districtId:['district'],
+    neighborhoodId:['neighborhood','neighborhoodCommon'],streetId:['street','streetCommon']
+  };
+  (groups[path]||[]).forEach(key=>{state.location[key]='';(names[key]||[]).forEach(name=>state.location[name]='');});
 }
 function applyLocationSelection(target){
   const id=target.value;
