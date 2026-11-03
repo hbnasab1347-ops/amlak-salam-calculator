@@ -7,4 +7,6 @@
 - Restore guidance: copy the corresponding files from this folder back to their original paths on this branch, or create a recovery branch from the base commit above.
 - The independent calculator is not modified by this snapshot or the planned stage.
 
+The snapshot includes the database, record forms, schema, desktop, IPC bridge, package configuration, tests, and Windows build workflow.
+
 Snapshot date: 2026-11-03
