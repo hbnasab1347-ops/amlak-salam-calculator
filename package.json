@@ -1,7 +1,7 @@
 {
   "name": "amlak-salam-calculator",
   "version": "1.0.0",
-  "description": "سامانه جامع املاک سلام به‌همراه محاسبه‌گر مستقل",
+  "description": "نسخه آزمایشی سامانه جامع املاک سلام به‌همراه محاسبه‌گر مستقل",
   "main": "main.js",
   "author": "Amlak Salam",
   "license": "UNLICENSED",
@@ -18,8 +18,8 @@
     "electron-updater": "^6.6.2"
   },
   "build": {
-    "appId": "ir.amlaaksalam.calculator.windows",
-    "productName": "املاک سلام",
+    "appId": "ir.amlaaksalam.test",
+    "productName": "املاک سلام آزمایشی",
     "directories": {
       "output": "dist",
       "buildResources": "build"
@@ -48,7 +48,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "املاک سلام"
+      "shortcutName": "املاک سلام آزمایشی"
     },
     "publish": [
       {
@@ -56,6 +56,7 @@
         "owner": "hbnasab1347-ops",
         "repo": "amlak-salam-calculator"
       }
-    ]
+    ],
+    "executableName": "AmlakSalam-Test"
   }
 }
