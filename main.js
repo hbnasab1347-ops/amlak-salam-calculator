@@ -5,7 +5,7 @@ const { autoUpdater } = require('electron-updater');
 const database = require('./app/database');
 
 let mainWindow;
-const allowedLocalPages = new Set(['launcher.html', 'desktop-home.html', 'index.html', 'record-entry.html', 'location-management.html']);
+const allowedLocalPages = new Set(['launcher.html', 'desktop-home.html', 'index.html', 'record-entry.html', 'location-management.html', 'custom-fields.html']);
 
 function attachSafeLocalWindowHandler(window) {
   window.webContents.on('did-create-window', childWindow => {
@@ -135,6 +135,31 @@ function registerIpcHandlers() {
     attachSafeLocalWindowHandler(window);
     window.loadFile(path.join(__dirname, 'app', 'location-management.html'));
     return { opened: true };
+  });
+
+  ipcMain.handle('open-custom-field-manager', event => {
+    if (!trustedRenderer(event, ['desktop-home.html'])) throw new Error('درخواست از صفحه مجاز ارسال نشده است.');
+    const window = new BrowserWindow({
+      width: 1320, height: 940, minWidth: 980, minHeight: 700,
+      title: 'مدیریت فیلدها و امکانات | املاک سلام',
+      icon: path.join(__dirname, 'build-icon.ico'), autoHideMenuBar: true,
+      webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
+    });
+    attachSafeLocalWindowHandler(window);
+    window.loadFile(path.join(__dirname, 'app', 'custom-fields.html'));
+    return { opened: true };
+  });
+  ipcMain.handle('fields:list', (event, input) => {
+    if (!trustedRenderer(event, ['custom-fields.html','record-entry.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.listCustomFields(input && input.entityType, Boolean(input && input.includeInactive));
+  });
+  ipcMain.handle('fields:save', (event, input) => {
+    if (!trustedRenderer(event, ['custom-fields.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.saveCustomField(input);
+  });
+  ipcMain.handle('fields:set-active', (event, input) => {
+    if (!trustedRenderer(event, ['custom-fields.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.setCustomFieldActive(input && input.id, input && input.active);
   });
 
   ipcMain.handle('locations:levels', event => {
