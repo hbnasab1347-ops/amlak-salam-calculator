@@ -45,7 +45,7 @@ function createWindow() {
     height: 820,
     minWidth: 900,
     minHeight: 650,
-    title: 'املاک سلام',
+    title: 'املاک سلام آزمایشی',
     icon: path.join(__dirname, 'build-icon.ico'),
     autoHideMenuBar: true,
     webPreferences: {
@@ -62,7 +62,8 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
-  if (app.isPackaged) {
+  // نسخه آزمایشی نباید به‌روزرسانی نسخه اصلی را دریافت کند.
+  if (app.isPackaged && app.getName() === 'املاک سلام') {
     autoUpdater.checkForUpdatesAndNotify().catch(err =>
       console.log('Update check:', err.message)
     );
