@@ -1,0 +1,64 @@
+name: Amlak Salam Dependency Security Diagnostic
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'package.json'
+      - '.github/workflows/security-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    runs-on: windows-latest
+    steps:
+      - name: دریافت کد
+        uses: actions/checkout@v5
+
+      - name: نصب Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: ساخت lockfile موقت بدون اجرای اسکریپت‌ها
+        shell: pwsh
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: اجرای بررسی امنیتی وابستگی‌ها
+        shell: pwsh
+        run: |
+          cmd /c "npm audit --json > npm-audit.json"
+          $auditExit = $LASTEXITCODE
+          Set-Content -Path npm-audit-exit-code.txt -Value "$auditExit"
+          try {
+            $audit = Get-Content -Path npm-audit.json -Raw | ConvertFrom-Json
+            $v = $audit.metadata.vulnerabilities
+            if ($null -ne $v) {
+              Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## نتیجه بررسی وابستگی‌ها"
+              Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Critical: $($v.critical)"
+              Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- High: $($v.high)"
+              Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Moderate: $($v.moderate)"
+              Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Low: $($v.low)"
+              Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- npm audit exit code: $auditExit"
+            } else {
+              Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "گزارش JSON فاقد بخش metadata.vulnerabilities است؛ فایل خام را در artifact بررسی کنید."
+            }
+          } catch {
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "خواندن گزارش JSON ممکن نشد؛ فایل خام و کد خروج در artifact قرار می‌گیرد."
+          }
+          # وجود آسیب‌پذیری نباید مانع بارگذاری گزارش تشخیصی شود.
+          exit 0
+
+      - name: بارگذاری گزارش و lockfile موقت
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: Amlak-Salam-Security-Diagnostic
+          path: |
+            npm-audit.json
+            npm-audit-exit-code.txt
+            package-lock.json
+          if-no-files-found: warn
+          retention-days: 30
