@@ -29,6 +29,9 @@ jobs:
       - name: نصب وابستگی‌ها
         run: npm install
 
+      - name: آزمون نحوی و پایگاه داده
+        run: npm test
+
       - name: ساخت نصب‌کننده ویندوز
         run: npm run dist
         env:
