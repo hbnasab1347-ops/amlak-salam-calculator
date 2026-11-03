@@ -6,6 +6,10 @@ let mainWindow;
 const allowedLocalPages = new Set(['launcher.html', 'desktop-home.html', 'index.html']);
 
 function attachSafeLocalWindowHandler(window) {
+  window.webContents.on('did-create-window', childWindow => {
+    attachSafeLocalWindowHandler(childWindow);
+  });
+
   window.webContents.setWindowOpenHandler(({ url }) => {
     try {
       const target = new URL(url);
