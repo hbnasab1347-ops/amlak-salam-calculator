@@ -135,6 +135,8 @@ function renderPropertyStep(){
     }
     structural=facilityChecks(typeFacilities[type]||typeFacilities.other,'امکانات و ویژگی‌های ملک');
   }
+  if(state.property.usageType==='agricultural') details += booleanSelect('details.waterRight','حق‌آبه / سهمیه آب') + booleanSelect('details.well','چاه مجاز') + booleanSelect('details.irrigation','امکان آبیاری');
+  if(state.property.usageType==='mixed') details += numberInput('details.residentialArea','متراژ بخش مسکونی (مترمربع)','') + numberInput('details.commercialArea','متراژ بخش تجاری (مترمربع)','');
   const headline=isDemand?'مشخصات ملک موردنظر':'مشخصات ملک';
   return `<h2 class="step-title">${headline}</h2>
     <p class="step-help">نوع ملک و کاربری را انتخاب کنید. فیلدهای زیر بر اساس نوع ملک تغییر می‌کنند؛ اطلاعاتی که در این مرحله پنهان می‌شوند در پیش‌نویس حفظ خواهند شد.</p>
