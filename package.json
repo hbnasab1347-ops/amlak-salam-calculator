@@ -8,7 +8,10 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --win nsis",
-    "publish": "electron-builder --win nsis --publish always"
+    "publish": "electron-builder --win nsis --publish always",
+    "test:syntax": "node --check main.js && node --check preload.js && node --check app/database.js && node --check app/record-entry.js && node --check app/smoke-test.js",
+    "test:data": "node app/smoke-test.js",
+    "test": "npm run test:syntax && npm run test:data"
   },
   "devDependencies": {
     "electron": "45.2.1",
