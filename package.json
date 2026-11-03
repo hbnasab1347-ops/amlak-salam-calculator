@@ -9,7 +9,7 @@
     "start": "electron .",
     "dist": "electron-builder --win nsis --publish never",
     "publish": "electron-builder --win nsis --publish always",
-    "test:syntax": "node --check main.js && node --check preload.js && node --check app/database.js && node --check app/record-entry.js && node --check app/location-management.js && node --check tests/database-smoke-test.js",
+    "test:syntax": "node --check main.js && node --check preload.js && node --check app/database.js && node --check app/record-entry.js && node --check app/location-management.js && node --check app/custom-fields.js && node --check tests/database-smoke-test.js",
     "test:data": "node tests/database-smoke-test.js",
     "test": "npm run test:syntax && npm run test:data"
   },
