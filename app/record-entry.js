@@ -27,6 +27,7 @@ let draftId = null;
 let currentStep = 0;
 let saveTimer = null;
 let saving = false;
+let locationCatalog = [];
 let state = {
   transactionType:'',
   property:{propertyType:'',usageType:''},
@@ -145,22 +146,50 @@ function renderPropertyStep(){
     <div class="field-grid">${selectInput('property.propertyType','نوع ملک',propertyTypes)}${selectInput('property.usageType','نوع کاربری',usageTypes)}${details}${structural}</div>
     <div class="info-strip">فیلدهای تخصصی این مرحله در کنار مشخصات پایه ذخیره می‌شوند. فهرست امکانات و فیلدها در مراحل بعد از بخش تنظیمات قابل شخصی‌سازی خواهد شد.</div>`;
 }
+function locationSelect(namePath,idPath,label,levels,parentId,commonPath=''){
+  const rows=locationCatalog.filter(x=>levels.includes(x.level)&&x.isActive&&(!parentId||x.parentId===parentId));
+  if(!rows.length) return textInput(namePath,label,'ابتدا موقعیت‌های معتبر را در مدیریت موقعیت‌ها تعریف کنید.');
+  return `<div class="field"><label>${label}</label><select data-path="${idPath}" data-location-name="${namePath}" data-location-common="${commonPath}"><option value="">انتخاب کنید</option>${rows.map(x=>`<option value="${x.id}" ${getPath(idPath)===x.id?'selected':''}>${escapeHtml(x.officialName)}${x.commonName?' ('+escapeHtml(x.commonName)+')':''}</option>`).join('')}</select></div>`;
+}
+function resetLocationDescendants(path){
+  const groups={
+    'location.provinceId':['countyId','cityId','districtId','neighborhoodId','streetId'],
+    'location.countyId':['cityId','districtId','neighborhoodId','streetId'],
+    'location.cityId':['districtId','neighborhoodId','streetId'],
+    'location.districtId':['neighborhoodId','streetId'],
+    'location.neighborhoodId':['streetId']
+  };
+  const names={countyId:'county',cityId:'city',districtId:'district',neighborhoodId:'neighborhood',streetId:'street'};
+  (groups[path]||[]).forEach(key=>{state.location[key]='';state.location[names[key]]='';});
+}
+function applyLocationSelection(target){
+  const id=target.value;
+  const selected=locationCatalog.find(x=>x.id===id);
+  const namePath=target.dataset.locationName;
+  const commonPath=target.dataset.locationCommon;
+  if(namePath) setPath(state,namePath,selected?selected.officialName:'');
+  if(commonPath) setPath(state,commonPath,selected?selected.commonName:'');
+  resetLocationDescendants(target.dataset.path);
+  scheduleSave();
+}
 function renderLocationStep(){
+  const provinceId=state.location.provinceId||'';
+  const countyId=state.location.countyId||'';
+  const cityId=state.location.cityId||'';
+  const districtId=state.location.districtId||'';
+  const neighborhoodId=state.location.neighborhoodId||'';
   return `<h2 class="step-title">موقعیت ${isDemand?'موردنظر':'ملک'}</h2>
-    <p class="step-help">نشانی را به ترتیب سلسله‌مراتب وارد کنید. نام رسمی در فیلد اصلی و نام متداول در فیلد جداگانه ثبت می‌شود تا در معرفی بعدی بتوان آن‌ها را به شکل «نام رسمی (نام رایج)» نمایش داد.</p>
+    <p class="step-help">در صورت تعریف فهرست موقعیت‌ها، انتخاب‌ها به‌صورت آبشاری انجام می‌شوند. نام رسمی و نام متداول هر موقعیت از فهرست مرجع خوانده می‌شود.</p>
     <div class="field-grid">
-      ${textInput('location.province','استان','مثلاً سمنان')}
-      ${textInput('location.county','شهرستان','مثلاً گرمسار')}
-      ${textInput('location.city','نام رسمی شهر','مثلاً گرمسار')}
-      ${textInput('location.cityCommon','نام متداول شهر (اختیاری)','در صورت تفاوت با نام رسمی')}
-      ${textInput('location.district','منطقه / ناحیه','')}
-      ${textInput('location.neighborhood','نام رسمی محله','')}
-      ${textInput('location.neighborhoodCommon','نام رایج محله (اختیاری)','')}
-      ${textInput('location.street','نام رسمی خیابان / بلوار / روستا','')}
-      ${textInput('location.streetCommon','نام متداول معبر (اختیاری)','')}
+      ${locationSelect('location.province','location.provinceId','استان',['province'],null)}
+      ${locationSelect('location.county','location.countyId','شهرستان',['county'],provinceId)}
+      ${locationSelect('location.city','location.cityId','شهر',['city'],countyId,'location.cityCommon')}
+      ${locationSelect('location.district','location.districtId','منطقه / ناحیه',['district'],cityId)}
+      ${locationSelect('location.neighborhood','location.neighborhoodId','محله',['neighborhood'],districtId||cityId,'location.neighborhoodCommon')}
+      ${locationSelect('location.street','location.streetId','خیابان / بلوار / میدان / روستا',['street','village'],neighborhoodId||districtId||cityId,'location.streetCommon')}
       ${textInput('location.address','نشانی، پلاک یا توضیح تکمیلی','',true)}
     </div>
-    <div class="info-strip">در این نسخه، موقعیت‌ها به‌صورت ساختاریافته در پرونده ذخیره می‌شوند؛ فهرست مرجع و انتخاب آبشاری مناطق، محله‌ها و معابر گرمسار پس از دریافت و تأیید فهرست رسمی/محلی در بخش مدیریت موقعیت‌ها ساخته خواهد شد.</div>`;
+    <div class="info-strip">اگر گزینه‌ای در فهرست دیده نمی‌شود، مدیر مجموعه باید آن را در «تنظیمات و شخصی‌سازی ← مدیریت موقعیت‌های جغرافیایی» تعریف کند. تا پیش از تعریف فهرست، فیلدهای متنی برای ورود دستی در دسترس هستند.</div>`;
 }
 function renderPricingStep(){
   if(isDemand){
@@ -267,11 +296,14 @@ async function init(){
     const saved=await api.getDraft(draftToLoad);
     if(saved){const p=saved.payload||{};draftId=saved.id;state={...state,...p,property:{...state.property,...p.property},location:{...state.location,...p.location},details:{...state.details,...p.details,facilities:Array.isArray(p.details?.facilities)?p.details.facilities:[]},pricing:{...state.pricing,...p.pricing},conditions:{...state.conditions,...p.conditions},contact:{...state.contact,...p.contact},notes:{...state.notes,...p.notes}};currentStep=Math.max(0,Math.min(5,Number(saved.step)||0));}
   }
+  locationCatalog=await api.listLocationCatalog(false);
   renderStep();
   const handleFieldChange=event=>{
     const target=event.target;
     const refresh=target.dataset.path==='property.propertyType'||target.dataset.path==='property.usageType';
+    const locationChange=Boolean(target.dataset.locationName);
     updateFromControl(target);
+    if(locationChange){applyLocationSelection(target);if(currentStep===2)renderStep();return;}
     if(refresh&&currentStep===1) renderStep();
   };
   $('#stepContent').addEventListener('input',handleFieldChange);
