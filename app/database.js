@@ -214,6 +214,93 @@ function listRecords(type = 'property') {
     FROM property_records ORDER BY created_at DESC LIMIT 100`);
 }
 
+const LOCATION_LEVELS = ['province','county','city','district','neighborhood','street','village'];
+const LOCATION_PARENT_LEVELS = {
+  province: [],
+  county: ['province'],
+  city: ['county'],
+  district: ['city'],
+  neighborhood: ['city','district'],
+  street: ['city','district','neighborhood'],
+  village: ['city','county']
+};
+const LOCATION_LEVEL_LABELS = {
+  province: 'استان', county: 'شهرستان', city: 'شهر', district: 'منطقه',
+  neighborhood: 'محله', street: 'خیابان / بلوار / میدان', village: 'روستا'
+};
+
+function listLocations(parentId = null, includeInactive = false) {
+  const where = [];
+  const params = [];
+  if (parentId === null) where.push('parent_id IS NULL');
+  else { where.push('parent_id=?'); params.push(asText(parentId)); }
+  if (!includeInactive) where.push('is_active=1');
+  return many(`SELECT id,parent_id AS parentId,level,official_name AS officialName,
+    common_name AS commonName,is_active AS isActive,sort_order AS sortOrder,created_at AS createdAt
+    FROM locations WHERE ${where.join(' AND ')} ORDER BY sort_order,official_name COLLATE NOCASE`, params);
+}
+
+function listLocationChildren(parentId, includeInactive = false) {
+  const where = ['parent_id=?'];
+  const params = [asText(parentId)];
+  if (!includeInactive) where.push('is_active=1');
+  return many(`SELECT id,parent_id AS parentId,level,official_name AS officialName,
+    common_name AS commonName,is_active AS isActive,sort_order AS sortOrder
+    FROM locations WHERE ${where.join(' AND ')} ORDER BY sort_order,official_name COLLATE NOCASE`, params);
+}
+
+function saveLocation(input = {}) {
+  const id = asText(input.id);
+  const level = asText(input.level);
+  const officialName = asText(input.officialName);
+  const commonName = asText(input.commonName);
+  const parentId = asText(input.parentId) || null;
+  const sortOrder = asInteger(input.sortOrder) || 0;
+  if (!LOCATION_LEVELS.includes(level)) throw new Error('سطح موقعیت معتبر نیست.');
+  if (!officialName) throw new Error('نام رسمی موقعیت را وارد کنید.');
+  if (officialName.length > 100 || commonName.length > 100) throw new Error('نام موقعیت نباید بیش از ۱۰۰ نویسه باشد.');
+  const allowedParents = LOCATION_PARENT_LEVELS[level];
+  if (allowedParents.length === 0 && parentId) throw new Error('استان نباید والد داشته باشد.');
+  if (allowedParents.length > 0 && !parentId) throw new Error('برای این سطح، انتخاب موقعیت بالادستی الزامی است.');
+  if (parentId) {
+    const parent = one('SELECT id,level FROM locations WHERE id=? AND is_active=1', [parentId]);
+    if (!parent || !allowedParents.includes(parent.level)) throw new Error('موقعیت بالادستی با سطح انتخاب‌شده سازگار نیست.');
+  }
+  const timestamp = now();
+  if (id) {
+    const existing = one('SELECT id,level FROM locations WHERE id=?', [id]);
+    if (!existing) throw new Error('موقعیت برای ویرایش پیدا نشد.');
+    if (existing.level !== level) throw new Error('سطح موقعیت پس از ثبت قابل تغییر نیست؛ موقعیت جدید تعریف کنید.');
+    if (id === parentId) throw new Error('موقعیت نمی‌تواند والد خودش باشد.');
+    run('UPDATE locations SET parent_id=?,official_name=?,common_name=?,sort_order=? WHERE id=?',
+      [parentId,officialName,commonName,sortOrder,id]);
+  } else {
+    const newId = makeId();
+    run(`INSERT INTO locations(id,parent_id,level,official_name,common_name,is_active,sort_order,created_at)
+      VALUES(?,?,?,?,?,1,?,?)`, [newId,parentId,level,officialName,commonName,sortOrder,timestamp]);
+    persist();
+    return { id:newId, level, officialName, commonName, parentId };
+  }
+  persist();
+  return { id, level, officialName, commonName, parentId };
+}
+
+function setLocationActive(id, isActive) {
+  const locationId = asText(id);
+  if (!one('SELECT id FROM locations WHERE id=?',[locationId])) throw new Error('موقعیت پیدا نشد.');
+  if (!isActive) {
+    const activeChildren = one('SELECT COUNT(*) AS count FROM locations WHERE parent_id=? AND is_active=1',[locationId]).count;
+    if (activeChildren > 0) throw new Error('ابتدا موقعیت‌های زیرمجموعه را غیرفعال کنید.');
+  }
+  run('UPDATE locations SET is_active=? WHERE id=?',[isActive?1:0,locationId]);
+  persist();
+  return { id:locationId, isActive:Boolean(isActive) };
+}
+
+function locationLevelLabels() {
+  return LOCATION_LEVELS.map(level=>({value:level,label:LOCATION_LEVEL_LABELS[level],parents:LOCATION_PARENT_LEVELS[level]}));
+}
+
 function dashboardStats() {
   return {
     properties: one("SELECT COUNT(*) AS count FROM property_records WHERE status='registered'").count,
@@ -222,4 +309,4 @@ function dashboardStats() {
   };
 }
 
-module.exports = { initialize, saveDraft, listDrafts, getDraft, deleteDraft, submitRecord, listRecords, dashboardStats };
+module.exports = { initialize, saveDraft, listDrafts, getDraft, deleteDraft, submitRecord, listRecords, dashboardStats, listLocations, listLocationChildren, saveLocation, setLocationActive, locationLevelLabels };
