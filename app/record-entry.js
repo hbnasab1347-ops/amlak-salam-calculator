@@ -162,6 +162,12 @@ async function init(){
   $('#closeWindow').addEventListener('click',()=>window.close());
   $('#cancelButton').addEventListener('click',()=>window.close());
   if(mode==='drafts'){
+    $('#stepContent').addEventListener('click',async event=>{
+      const resume=event.target.closest('[data-resume]');
+      const remove=event.target.closest('[data-delete]');
+      if(resume) window.location.replace('record-entry.html?type='+resume.dataset.type+'&draftId='+encodeURIComponent(resume.dataset.resume));
+      if(remove){await api.deleteDraft(remove.dataset.delete);renderDraftList(await api.listDrafts());toast('پیش‌نویس حذف شد.');}
+    });
     const drafts=await api.listDrafts();
     renderDraftList(drafts);
     $('#draftLabel').textContent=drafts.length+' پیش‌نویس';
@@ -183,7 +189,9 @@ async function init(){
   $('#submitButton').addEventListener('click',async()=>{
     if(!validateStep()||!state.contact.fullName.trim()&&!state.contact.mobile.trim()){toast('نام یا شماره تماس را وارد کنید.');currentStep=4;renderStep();return;}
     $('#submitButton').disabled=true;setSaveState('در حال ثبت پرونده…');
+    clearTimeout(saveTimer);
     try{
+      await saveDraftNow();
       const result=await api.submitRecord({type:recordType,payload:state,draftId});
       setSaveState('پرونده ثبت شد');
       $('#stepContent').innerHTML=`<div class="empty-state"><h2>پرونده با موفقیت در پایگاه داده محلی ثبت شد.</h2><p>کد پرونده: <strong>${escapeHtml(result.code)}</strong></p><p>وضعیت: ثبت‌شده داخلی · بدون انتشار آگهی</p><button class="primary-button" id="newRecord">ثبت پرونده جدید</button></div>`;
