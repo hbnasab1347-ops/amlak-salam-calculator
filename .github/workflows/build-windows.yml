@@ -9,6 +9,8 @@ on:
       - 'preload.js'
       - 'desktop-home.html'
       - 'app/**'
+      - 'launcher.html'
+      - 'desktop-home.html'
       - 'index.html'
       - 'build-icon.ico'
       - '.github/workflows/build-windows.yml'
