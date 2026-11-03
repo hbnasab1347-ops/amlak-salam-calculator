@@ -10,6 +10,26 @@ async function main() {
     const info = await database.initialize(directory);
     assert.strictEqual(info.schemaVersion, '1');
 
+    const province = database.saveLocation({ level:'province', officialName:'سمنان', commonName:'', sortOrder:1 });
+    const county = database.saveLocation({ level:'county', parentId:province.id, officialName:'گرمسار', commonName:'', sortOrder:1 });
+    const city = database.saveLocation({ level:'city', parentId:county.id, officialName:'گرمسار', commonName:'', sortOrder:1 });
+    const district = database.saveLocation({ level:'district', parentId:city.id, officialName:'منطقه آزمایشی', commonName:'', sortOrder:1 });
+    const neighborhood = database.saveLocation({ level:'neighborhood', parentId:district.id, officialName:'محله آزمایشی', commonName:'', sortOrder:1 });
+    const street = database.saveLocation({ level:'street', parentId:neighborhood.id, officialName:'خیابان آزمایشی', commonName:'نام رایج', sortOrder:1 });
+    assert.strictEqual(database.listLocationCatalog(false).length, 6);
+    assert.strictEqual(database.listLocations(null,false)[0].officialName, 'سمنان');
+    assert.strictEqual(database.listLocationChildren(neighborhood.id,false)[0].id, street.id);
+    assert.throws(() => database.saveLocation({ level:'county', parentId:city.id, officialName:'والد نامعتبر' }), /بالادستی/);
+    assert.throws(() => database.setLocationActive(province.id,false), /زیرمجموعه/);
+    database.setLocationActive(street.id,false);
+    database.setLocationActive(neighborhood.id,false);
+    database.setLocationActive(district.id,false);
+    database.setLocationActive(city.id,false);
+    database.setLocationActive(county.id,false);
+    database.setLocationActive(province.id,false);
+    assert.strictEqual(database.listLocationCatalog(false).length, 0);
+    assert.strictEqual(database.listLocationCatalog(true).length, 6);
+
     const draft = database.saveDraft({
       type: 'property',
       step: 2,
@@ -61,7 +81,7 @@ async function main() {
     assert.strictEqual(stats.properties, 1);
     assert.strictEqual(stats.demands, 1);
     assert.strictEqual(stats.drafts, 0);
-    console.log('Stage 08 database smoke test: PASS');
+    console.log('Stage 09 database smoke test: PASS');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
