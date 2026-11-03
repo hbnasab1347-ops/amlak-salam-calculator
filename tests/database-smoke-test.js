@@ -13,10 +13,12 @@ async function main() {
     const draft = database.saveDraft({
       type: 'property',
       step: 2,
-      payload: { transactionType: 'sale', property: { propertyType: 'apartment' } }
+      payload: { transactionType: 'sale', property: { propertyType: 'apartment' }, details: { frontage: 6.5, documentStatus: 'six_dang', facilities: ['بر خیابان'] } }
     });
     assert.ok(draft.id);
     assert.strictEqual(database.getDraft(draft.id).step, 2);
+    assert.strictEqual(database.getDraft(draft.id).payload.details.frontage, 6.5);
+    assert.deepStrictEqual(database.getDraft(draft.id).payload.details.facilities, ['بر خیابان']);
     assert.strictEqual(database.listDrafts().length, 1);
 
     const property = database.submitRecord({
@@ -59,7 +61,7 @@ async function main() {
     assert.strictEqual(stats.properties, 1);
     assert.strictEqual(stats.demands, 1);
     assert.strictEqual(stats.drafts, 0);
-    console.log('Stage 07 database smoke test: PASS');
+    console.log('Stage 08 database smoke test: PASS');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
