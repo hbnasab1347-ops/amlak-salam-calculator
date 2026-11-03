@@ -15,7 +15,8 @@
     "electron-builder": "26.18.0"
   },
   "dependencies": {
-    "electron-updater": "6.8.11"
+    "electron-updater": "6.8.11",
+    "sql.js": "1.15.2"
   },
   "build": {
     "appId": "ir.amlaaksalam.test",
@@ -26,9 +27,11 @@
     },
     "files": [
       "main.js",
+      "preload.js",
       "launcher.html",
       "desktop-home.html",
       "index.html",
+      "app/**",
       "build-icon.ico",
       "package.json"
     ],
