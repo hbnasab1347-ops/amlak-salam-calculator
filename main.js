@@ -137,6 +137,29 @@ function registerIpcHandlers() {
     return { opened: true };
   });
 
+  ipcMain.handle('open-archive', (event, type) => {
+    if (!trustedRenderer(event, ['desktop-home.html'])) throw new Error('درخواست از صفحه مجاز ارسال نشده است.');
+    if (!['property','demand'].includes(type)) throw new Error('نوع بایگانی معتبر نیست.');
+    const window = new BrowserWindow({
+      width: 1360, height: 940, minWidth: 980, minHeight: 680,
+      title: 'بایگانی و جست‌وجوی هوشمند | املاک سلام',
+      icon: path.join(__dirname, 'build-icon.ico'), autoHideMenuBar: true,
+      webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
+    });
+    attachSafeLocalWindowHandler(window);
+    window.loadFile(path.join(__dirname, 'app', 'archive.html'));
+    window.webContents.once('did-finish-load', () => window.webContents.executeJavaScript("window.__archiveInitialType=" + JSON.stringify(type)));
+    return { opened: true };
+  });
+  ipcMain.handle('archive:list', (event, input) => {
+    if (!trustedRenderer(event, ['archive.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.listArchiveRecords(input && input.type, input && input.filters || {});
+  });
+  ipcMain.handle('archive:matches', (event, input) => {
+    if (!trustedRenderer(event, ['archive.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.findRecordMatches(input && input.type, input && input.id);
+  });
+
   ipcMain.handle('open-custom-field-manager', event => {
     if (!trustedRenderer(event, ['desktop-home.html'])) throw new Error('درخواست از صفحه مجاز ارسال نشده است.');
     const window = new BrowserWindow({
