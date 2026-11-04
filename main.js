@@ -5,7 +5,7 @@ const { autoUpdater } = require('electron-updater');
 const database = require('./app/database');
 
 let mainWindow;
-const allowedLocalPages = new Set(['launcher.html', 'desktop-home.html', 'index.html', 'record-entry.html', 'location-management.html', 'custom-fields.html']);
+const allowedLocalPages = new Set(['launcher.html', 'desktop-home.html', 'index.html', 'record-entry.html', 'location-management.html', 'custom-fields.html', 'contacts.html']);
 
 function attachSafeLocalWindowHandler(window) {
   window.webContents.on('did-create-window', childWindow => {
@@ -157,6 +157,35 @@ function registerIpcHandlers() {
   ipcMain.handle('archive:matches', (event, input) => {
     if (!trustedRenderer(event, ['archive.html'])) throw new Error('دسترسی غیرمجاز.');
     return database.findRecordMatches(input && input.type, input && input.id);
+  });
+
+
+  ipcMain.handle('open-contacts', event => {
+    if (!trustedRenderer(event, ['desktop-home.html'])) throw new Error('درخواست از صفحه مجاز ارسال نشده است.');
+    const window = new BrowserWindow({width:1320,height:940,minWidth:980,minHeight:700,title:'مدیریت ارباب‌رجوع | املاک سلام',icon:path.join(__dirname,'build-icon.ico'),autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.js'),contextIsolation:true,nodeIntegration:false,sandbox:true}});
+    attachSafeLocalWindowHandler(window);
+    window.loadFile(path.join(__dirname,'app','contacts.html'));
+    return {opened:true};
+  });
+  ipcMain.handle('contacts:list', (event, filters) => {
+    if (!trustedRenderer(event, ['contacts.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.listContacts(filters || {});
+  });
+  ipcMain.handle('contacts:save', (event, input) => {
+    if (!trustedRenderer(event, ['contacts.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.saveManagedContact(input || {});
+  });
+  ipcMain.handle('contacts:active', (event, input) => {
+    if (!trustedRenderer(event, ['contacts.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.setContactActive(input && input.id, input && input.active);
+  });
+  ipcMain.handle('contacts:detail', (event, id) => {
+    if (!trustedRenderer(event, ['contacts.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.getContactDetail(id);
+  });
+  ipcMain.handle('contacts:followup', (event, input) => {
+    if (!trustedRenderer(event, ['contacts.html'])) throw new Error('دسترسی غیرمجاز.');
+    return database.addContactFollowup(input || {});
   });
 
   ipcMain.handle('open-custom-field-manager', event => {
