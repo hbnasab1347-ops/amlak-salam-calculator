@@ -3,6 +3,14 @@ on:
   push:
     branches:
       - stage-11-archive-search-matching
+    paths:
+      - '.github/workflows/stage-11-validation.yml'
+      - 'app/**'
+      - 'main.js'
+      - 'preload.js'
+      - 'package.json'
+      - 'desktop-home.html'
+      - 'tests/**'
   workflow_dispatch:
 jobs:
   test-and-build:
