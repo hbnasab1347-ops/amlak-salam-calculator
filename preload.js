@@ -16,6 +16,9 @@ contextBridge.exposeInMainWorld('AmlakDesktop', {
   saveLocation: input => ipcRenderer.invoke('locations:save', input),
   setLocationActive: (id, active) => ipcRenderer.invoke('locations:set-active', { id, active }),
   openCustomFieldManager: () => ipcRenderer.invoke('open-custom-field-manager'),
+  openArchive: type => ipcRenderer.invoke('open-archive', type),
+  listArchiveRecords: (type, filters) => ipcRenderer.invoke('archive:list', { type, filters }),
+  findRecordMatches: (type, id) => ipcRenderer.invoke('archive:matches', { type, id }),
   listCustomFields: (entityType, includeInactive=false) => ipcRenderer.invoke('fields:list', { entityType, includeInactive }),
   saveCustomField: input => ipcRenderer.invoke('fields:save', input),
   setCustomFieldActive: (id, active) => ipcRenderer.invoke('fields:set-active', { id, active })
