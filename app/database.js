@@ -380,4 +380,88 @@ function setCustomFieldActive(id, active) {
   return {id:fieldId,isActive:Boolean(active)};
 }
 
-module.exports = { listCustomFields, saveCustomField, setCustomFieldActive, initialize, saveDraft, listDrafts, getDraft, deleteDraft, submitRecord, listRecords, dashboardStats, listLocations, listLocationChildren, listLocationCatalog, saveLocation, setLocationActive, locationLevelLabels };
+
+function safePayload(row) {
+  try { return JSON.parse(row.payload_json || '{}'); } catch { return {}; }
+}
+function customValues(payload, type) {
+  const values = payload && payload.customFields && payload.customFields[type];
+  return values && typeof values === 'object' && !Array.isArray(values) ? values : {};
+}
+function publicArchiveRow(row, type) {
+  const payload = safePayload(row);
+  const base = {
+    id:row.id, code:row.record_code, type,
+    transactionType:type==='property'?row.transaction_type:row.request_type,
+    propertyType:row.property_type, usageType:row.usage_type,
+    city:row.city, district:row.district || '', neighborhood:row.neighborhood || '',
+    status:row.status, createdAt:row.created_at,
+    customFields:customValues(payload,type)
+  };
+  if(type==='property') return {...base, area:row.area_sqm, publicPrice:row.public_price, deposit:row.deposit_amount, monthlyRent:row.monthly_rent};
+  return {...base, areaMin:row.area_min, areaMax:row.area_max, budgetMin:row.budget_min, budgetMax:row.budget_max,
+    depositMin:row.deposit_min, depositMax:row.deposit_max, rentMin:row.monthly_rent_min, rentMax:row.monthly_rent_max};
+}
+function listArchiveRecords(type='property', filters={}) {
+  if(!['property','demand'].includes(type)) throw new Error('نوع بایگانی معتبر نیست.');
+  const query=asText(filters.query).toLocaleLowerCase();
+  const fieldKey=asText(filters.fieldKey);
+  const fieldValue=asText(filters.fieldValue).toLocaleLowerCase();
+  const status=asText(filters.status);
+  const rows=type==='property'
+    ? many("SELECT * FROM property_records WHERE (?='' OR status=?) ORDER BY created_at DESC LIMIT 1000",[status,status])
+    : many("SELECT * FROM demand_records WHERE (?='' OR status=?) ORDER BY created_at DESC LIMIT 1000",[status,status]);
+  return rows.map(row=>publicArchiveRow(row,type)).filter(item=>{
+    const custom=Object.entries(item.customFields);
+    if(fieldKey && fieldValue){
+      const value=item.customFields[fieldKey];
+      const normalized=Array.isArray(value)?value.join(' '):String(value??'');
+      if(!normalized.toLocaleLowerCase().includes(fieldValue)) return false;
+    }
+    if(!query) return true;
+    const searchable=[item.code,item.transactionType,item.propertyType,item.usageType,item.city,item.district,item.neighborhood,
+      ...custom.map(([key,value])=>key+' '+(Array.isArray(value)?value.join(' '):String(value??'')))];
+    if(type==='property') searchable.push(item.area,item.publicPrice,item.deposit,item.monthlyRent);
+    else searchable.push(item.areaMin,item.areaMax,item.budgetMin,item.budgetMax,item.depositMin,item.depositMax,item.rentMin,item.rentMax);
+    return searchable.some(value=>String(value??'').toLocaleLowerCase().includes(query));
+  });
+}
+function matchPropertyToDemand(property, demand) {
+  const reasons=[]; let earned=0, possible=0;
+  const add=(condition,weight,label)=>{possible+=weight;if(condition){earned+=weight;reasons.push(label);}};
+  add(Boolean(property.city&&demand.city&&property.city===demand.city),30,'شهر یکسان');
+  add(Boolean(property.neighborhood&&demand.neighborhood&&property.neighborhood===demand.neighborhood),12,'محله یکسان');
+  add(Boolean(property.property_type&&demand.property_type&&property.property_type===demand.property_type),20,'نوع ملک یکسان');
+  add(!property.usage_type||!demand.usage_type||property.usage_type===demand.usage_type,8,'کاربری سازگار');
+  const txMap={sale:'purchase',presale:'pre_purchase',rent_lease:'rent_lease',participation:'participation'};
+  add(txMap[property.transaction_type]===demand.request_type,15,'نوع معامله سازگار');
+  const area=property.area_sqm;
+  const areaFits=area==null||(demand.area_min==null||area>=demand.area_min)&&(demand.area_max==null||area<=demand.area_max);
+  add(areaFits,5,'متراژ در محدوده تقاضا');
+  const price=property.public_price;
+  const budgetFits=price==null||(demand.budget_min==null||price>=demand.budget_min)&&(demand.budget_max==null||price<=demand.budget_max);
+  add(budgetFits,5,'قیمت اعلامی در بودجه');
+  const needed=JSON.parse(demand.required_facilities_json||'[]');
+  const available=JSON.parse(property.facilities_json||'[]');
+  const facilityFits=!needed.length||needed.every(x=>available.includes(x));
+  add(facilityFits,5,'امکانات موردنیاز');
+  const score=possible?Math.round(earned/possible*100):0;
+  return {score,reasons};
+}
+function findRecordMatches(type,id) {
+  if(!['property','demand'].includes(type)) throw new Error('نوع پرونده معتبر نیست.');
+  if(type==='property'){
+    const source=one("SELECT * FROM property_records WHERE id=?",[asText(id)]);
+    if(!source) throw new Error('پرونده ملک پیدا نشد.');
+    const candidates=many("SELECT * FROM demand_records WHERE status='registered' ORDER BY created_at DESC LIMIT 1000");
+    return candidates.map(candidate=>({item:publicArchiveRow(candidate,'demand'),...matchPropertyToDemand(source,candidate)}))
+      .filter(x=>x.score>=45).sort((a,b)=>b.score-a.score).slice(0,30);
+  }
+  const source=one("SELECT * FROM demand_records WHERE id=?",[asText(id)]);
+  if(!source) throw new Error('پرونده تقاضا پیدا نشد.');
+  const candidates=many("SELECT * FROM property_records WHERE status='registered' ORDER BY created_at DESC LIMIT 1000");
+  return candidates.map(candidate=>({item:publicArchiveRow(candidate,'property'),...matchPropertyToDemand(candidate,source)}))
+    .filter(x=>x.score>=45).sort((a,b)=>b.score-a.score).slice(0,30);
+}
+
+module.exports = { listArchiveRecords, findRecordMatches, listCustomFields, saveCustomField, setCustomFieldActive, initialize, saveDraft, listDrafts, getDraft, deleteDraft, submitRecord, listRecords, dashboardStats, listLocations, listLocationChildren, listLocationCatalog, saveLocation, setLocationActive, locationLevelLabels };
