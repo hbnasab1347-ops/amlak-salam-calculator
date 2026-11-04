@@ -411,7 +411,8 @@ function listArchiveRecords(type='property', filters={}) {
   const rows=type==='property'
     ? many("SELECT * FROM property_records WHERE (?='' OR status=?) ORDER BY created_at DESC LIMIT 1000",[status,status])
     : many("SELECT * FROM demand_records WHERE (?='' OR status=?) ORDER BY created_at DESC LIMIT 1000",[status,status]);
-  return rows.map(row=>publicArchiveRow(row,type)).filter(item=>{
+  const fieldLabels=Object.fromEntries(listCustomFields(type,true).map(field=>[field.fieldKey,field.label]));
+  return rows.map(row=>({...publicArchiveRow(row,type),customFieldLabels:fieldLabels})).filter(item=>{
     const custom=Object.entries(item.customFields);
     if(fieldKey && fieldValue){
       const value=item.customFields[fieldKey];
