@@ -43,6 +43,7 @@ const nav=document.getElementById('navlist'),modal=document.getElementById('moda
 modules.forEach((name,i)=>{const b=document.createElement('button');b.className='navitem';b.innerHTML='<span class="ico">'+symbols[i]+'</span><span>'+(i+1)+'. '+name+'</span>';b.addEventListener('click',()=>openModule(name));nav.appendChild(b)});
 function openModule(name){
  if(name==='محاسبه‌گرها'){openCalculator();return;}
+ if(name==='مدیریت ارباب‌رجوع'){if(window.AmlakDesktop&&window.AmlakDesktop.openContacts){window.AmlakDesktop.openContacts().catch(error=>toast(error.message||'امکان باز کردن مدیریت ارباب‌رجوع وجود ندارد.'));}else{toast('مدیریت ارباب‌رجوع در این محیط قابل اجرا نیست.')}return;}
  const routes={'ثبت ملک':'property','ثبت تقاضا':'demand','پیش‌نویس‌ها':'drafts'};
  if(name==='بایگانی ملک'||name==='بایگانی تقاضا'){
   const archiveType=name==='بایگانی ملک'?'property':'demand';
