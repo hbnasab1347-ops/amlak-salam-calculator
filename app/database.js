@@ -395,7 +395,7 @@ function publicArchiveRow(row, type) {
     transactionType:type==='property'?row.transaction_type:row.request_type,
     propertyType:row.property_type, usageType:row.usage_type,
     city:row.city, district:row.district || '', neighborhood:row.neighborhood || '',
-    status:row.status, createdAt:row.created_at,
+    status:row.status, createdAt:row.created_at, publicNotes:row.public_notes || '',
     customFields:customValues(payload,type)
   };
   if(type==='property') return {...base, area:row.area_sqm, publicPrice:row.public_price, deposit:row.deposit_amount, monthlyRent:row.monthly_rent};
@@ -419,7 +419,7 @@ function listArchiveRecords(type='property', filters={}) {
       if(!normalized.toLocaleLowerCase().includes(fieldValue)) return false;
     }
     if(!query) return true;
-    const searchable=[item.code,item.transactionType,item.propertyType,item.usageType,item.city,item.district,item.neighborhood,
+    const searchable=[item.code,item.transactionType,item.propertyType,item.usageType,item.city,item.district,item.neighborhood,item.publicNotes,
       ...custom.map(([key,value])=>key+' '+(Array.isArray(value)?value.join(' '):String(value??'')))];
     if(type==='property') searchable.push(item.area,item.publicPrice,item.deposit,item.monthlyRent);
     else searchable.push(item.areaMin,item.areaMax,item.budgetMin,item.budgetMax,item.depositMin,item.depositMax,item.rentMin,item.rentMax);
