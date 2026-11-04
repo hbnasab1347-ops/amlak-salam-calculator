@@ -147,8 +147,7 @@ function registerIpcHandlers() {
       webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true }
     });
     attachSafeLocalWindowHandler(window);
-    window.loadFile(path.join(__dirname, 'app', 'archive.html'));
-    window.webContents.once('did-finish-load', () => window.webContents.executeJavaScript("window.__archiveInitialType=" + JSON.stringify(type)));
+    window.loadFile(path.join(__dirname, 'app', 'archive.html'), { query: { type } });
     return { opened: true };
   });
   ipcMain.handle('archive:list', (event, input) => {
