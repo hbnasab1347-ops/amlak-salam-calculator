@@ -92,6 +92,14 @@ async function initialize(userDataPath) {
   for (const [column, definition] of fieldMigrations) {
     if (!fieldColumns.includes(column)) db.run('ALTER TABLE field_definitions ADD COLUMN ' + column + ' ' + definition);
   }
+  const contactColumns = db.exec("PRAGMA table_info(contacts)")[0]?.values?.map(row => row[1]) || [];
+  if (!contactColumns.includes('is_active')) db.run('ALTER TABLE contacts ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1');
+  db.run(`CREATE TABLE IF NOT EXISTS contact_followups (
+    id TEXT PRIMARY KEY, contact_id TEXT NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+    followup_type TEXT NOT NULL DEFAULT 'note', summary TEXT NOT NULL DEFAULT '',
+    happened_at TEXT NOT NULL, next_at TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL
+  )`);
+  db.run('CREATE INDEX IF NOT EXISTS idx_contact_followups_contact ON contact_followups(contact_id,happened_at DESC)');
   db.run('CREATE INDEX IF NOT EXISTS idx_field_definitions_scope ON field_definitions(entity_type,is_active,sort_order)');
   persist();
   return { database: path.basename(dbPath), schemaVersion: one("SELECT value FROM app_meta WHERE key='schema_version'").value };
@@ -484,4 +492,68 @@ function findRecordMatches(type,id) {
     .filter(x=>x.score>=45).sort((a,b)=>b.score-a.score).slice(0,30);
 }
 
-module.exports = { listArchiveRecords, findRecordMatches, listCustomFields, saveCustomField, setCustomFieldActive, initialize, saveDraft, listDrafts, getDraft, deleteDraft, submitRecord, listRecords, dashboardStats, listLocations, listLocationChildren, listLocationCatalog, saveLocation, setLocationActive, locationLevelLabels };
+
+function listContacts(filters = {}) {
+  const query = asText(filters.query).toLocaleLowerCase();
+  const role = asText(filters.role);
+  const active = filters.active === 'all' ? '' : filters.active === 'inactive' ? '0' : '1';
+  return many(\`SELECT c.id,c.full_name AS fullName,c.mobile,c.phone,c.email,c.contact_role AS role,
+    c.public_notes AS publicNotes,c.confidential_notes AS confidentialNotes,c.is_active AS isActive,
+    c.created_at AS createdAt,c.updated_at AS updatedAt,
+    (SELECT COUNT(*) FROM property_records p WHERE p.owner_contact_id=c.id) AS propertyCount,
+    (SELECT COUNT(*) FROM demand_records d WHERE d.applicant_contact_id=c.id) AS demandCount
+    FROM contacts c
+    WHERE (?='' OR c.contact_role=? OR (?='both' AND c.contact_role IN ('owner','applicant')))
+      AND (?='' OR c.is_active=?)
+    ORDER BY c.updated_at DESC LIMIT 1000\`, [role,role,role,active,active])
+    .filter(c => !query || [c.fullName,c.mobile,c.phone,c.email].some(v=>String(v||'').toLocaleLowerCase().includes(query)))
+    .map(c=>({...c,isActive:Boolean(c.isActive)}));
+}
+function saveManagedContact(input = {}) {
+  const id=asText(input.id), fullName=asText(input.fullName), mobile=asText(input.mobile);
+  const role=asText(input.role);
+  if(!fullName) throw new Error('نام و نام خانوادگی را وارد کنید.');
+  if(fullName.length>120 || mobile.length>30) throw new Error('طول نام یا شماره تماس بیش از حد مجاز است.');
+  if(!['owner','applicant','both'].includes(role)) throw new Error('نقش ارباب‌رجوع معتبر نیست.');
+  const values=[fullName,mobile,asText(input.phone),asText(input.email),role,asText(input.publicNotes),asText(input.confidentialNotes),now()];
+  if(values.some(v=>String(v).length>2000)) throw new Error('یکی از توضیحات بیش از حد طولانی است.');
+  if(id){
+    if(!one('SELECT id FROM contacts WHERE id=?',[id])) throw new Error('ارباب‌رجوع پیدا نشد.');
+    run('UPDATE contacts SET full_name=?,mobile=?,phone=?,email=?,contact_role=?,public_notes=?,confidential_notes=?,updated_at=? WHERE id=?',[...values,id]);
+  } else {
+    const newId=makeId();
+    run('INSERT INTO contacts(id,full_name,mobile,phone,email,contact_role,public_notes,confidential_notes,created_at,updated_at,is_active) VALUES(?,?,?,?,?,?,?,?,?,?,1)',
+      [newId,...values]);
+    persist(); return {id:newId,saved:true};
+  }
+  persist(); return {id,saved:true};
+}
+function setContactActive(id, active) {
+  const contactId=asText(id);
+  if(!one('SELECT id FROM contacts WHERE id=?',[contactId])) throw new Error('ارباب‌رجوع پیدا نشد.');
+  run('UPDATE contacts SET is_active=?,updated_at=? WHERE id=?',[active?1:0,now(),contactId]);
+  persist(); return {id:contactId,isActive:Boolean(active)};
+}
+function getContactDetail(id) {
+  const contact=listContacts({active:'all'}).find(c=>c.id===asText(id));
+  if(!contact) return null;
+  const properties=many('SELECT id,record_code AS code,transaction_type AS transactionType,property_type AS propertyType,city,neighborhood,status,created_at AS createdAt FROM property_records WHERE owner_contact_id=? ORDER BY created_at DESC',[contact.id]);
+  const demands=many('SELECT id,record_code AS code,request_type AS transactionType,property_type AS propertyType,city,neighborhood,status,created_at AS createdAt FROM demand_records WHERE applicant_contact_id=? ORDER BY created_at DESC',[contact.id]);
+  const followups=many('SELECT id,followup_type AS type,summary,happened_at AS happenedAt,next_at AS nextAt,created_at AS createdAt FROM contact_followups WHERE contact_id=? ORDER BY happened_at DESC LIMIT 100',[contact.id]);
+  return {contact,properties,demands,followups};
+}
+function addContactFollowup(input={}) {
+  const contactId=asText(input.contactId), summary=asText(input.summary), type=asText(input.type)||'note';
+  if(!one('SELECT id FROM contacts WHERE id=?',[contactId])) throw new Error('ارباب‌رجوع پیدا نشد.');
+  if(!summary) throw new Error('شرح پیگیری را وارد کنید.');
+  if(!['call','meeting','visit','negotiation','note'].includes(type)) throw new Error('نوع پیگیری معتبر نیست.');
+  if(summary.length>2000) throw new Error('شرح پیگیری بیش از حد طولانی است.');
+  const happenedAt=asText(input.happenedAt)||now(), nextAt=asText(input.nextAt);
+  const id=makeId();
+  run('INSERT INTO contact_followups(id,contact_id,followup_type,summary,happened_at,next_at,created_at) VALUES(?,?,?,?,?,?,?)',
+    [id,contactId,type,summary,happenedAt,nextAt,now()]);
+  run('UPDATE contacts SET updated_at=? WHERE id=?',[now(),contactId]);
+  persist(); return {id,saved:true};
+}
+
+module.exports = { listContacts, saveManagedContact, setContactActive, getContactDetail, addContactFollowup, listArchiveRecords, findRecordMatches, listCustomFields, saveCustomField, setCustomFieldActive, initialize, saveDraft, listDrafts, getDraft, deleteDraft, submitRecord, listRecords, dashboardStats, listLocations, listLocationChildren, listLocationCatalog, saveLocation, setLocationActive, locationLevelLabels };
