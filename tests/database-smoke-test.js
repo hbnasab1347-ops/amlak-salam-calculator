@@ -75,7 +75,7 @@ async function main() {
         details: { area: 92, constructionYear: 1400, elevator: true, parkingType: 'exclusive', storage: true, directLight: true, facilities: ['تلفن ثابت'] },
         pricing: { publicPrice: 8500000000, redlinePrice: 8100000000 },
         contact: { fullName: 'آزمون داخلی', mobile: '09000000000' },
-        notes: { public: 'یادداشت آزمایشی عمومی', confidential: 'یادداشت آزمایشی محرمانه' }
+        notes: { public: 'یادداشت آزمایشی عمومی', confidential: 'یادداشت آزمایشی محرمانه' },\n        customFields: { property: { passage_width: 8.5 } }
       }
     });
     assert.ok(property.code.startsWith('AS-P-'));
@@ -100,6 +100,18 @@ async function main() {
     });
     assert.ok(demand.code.startsWith('AS-D-'));
     assert.strictEqual(database.listRecords('demand').length, 1);
+
+    const archiveProperties = database.listArchiveRecords('property',{fieldKey:'passage_width',fieldValue:'8.5'});
+    assert.strictEqual(archiveProperties.length,1);
+    assert.strictEqual(archiveProperties[0].customFields.passage_width,8.5);
+    assert.ok(!Object.prototype.hasOwnProperty.call(archiveProperties[0],'redlinePrice'));
+    assert.ok(!Object.prototype.hasOwnProperty.call(archiveProperties[0],'confidentialNotes'));
+    assert.strictEqual(database.listArchiveRecords('property',{query:'یادداشت آزمایشی محرمانه'}).length,0);
+    assert.strictEqual(database.listArchiveRecords('property',{query:'آزمایشی عمومی'}).length,1);
+    const propertyMatches = database.findRecordMatches('property',property.id);
+    assert.ok(propertyMatches.some(match=>match.item.id===demand.id));
+    assert.ok(propertyMatches[0].score>=45);
+
 
     const stats = database.dashboardStats();
     assert.strictEqual(stats.properties, 1);
