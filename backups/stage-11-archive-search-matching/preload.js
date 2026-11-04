@@ -1,0 +1,25 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('AmlakDesktop', {
+  openCalculator: () => ipcRenderer.invoke('open-calculator'),
+  openRecordEntry: type => ipcRenderer.invoke('open-record-entry', type),
+  saveDraft: input => ipcRenderer.invoke('records:save-draft', input),
+  listDrafts: () => ipcRenderer.invoke('records:list-drafts'),
+  getDraft: id => ipcRenderer.invoke('records:get-draft', id),
+  deleteDraft: id => ipcRenderer.invoke('records:delete-draft', id),
+  submitRecord: input => ipcRenderer.invoke('records:submit', input),
+  listRecords: type => ipcRenderer.invoke('records:list', type),
+  getDashboardStats: () => ipcRenderer.invoke('app:dashboard-stats'),
+  openLocationManager: () => ipcRenderer.invoke('open-location-manager'),
+  locationLevelLabels: () => ipcRenderer.invoke('locations:levels'),
+  listLocationCatalog: includeInactive => ipcRenderer.invoke('locations:list-all', includeInactive),
+  saveLocation: input => ipcRenderer.invoke('locations:save', input),
+  setLocationActive: (id, active) => ipcRenderer.invoke('locations:set-active', { id, active }),
+  openCustomFieldManager: () => ipcRenderer.invoke('open-custom-field-manager'),
+  openArchive: type => ipcRenderer.invoke('open-archive', type),
+  listArchiveRecords: (type, filters) => ipcRenderer.invoke('archive:list', { type, filters }),
+  findRecordMatches: (type, id) => ipcRenderer.invoke('archive:matches', { type, id }),
+  listCustomFields: (entityType, includeInactive=false) => ipcRenderer.invoke('fields:list', { entityType, includeInactive }),
+  saveCustomField: input => ipcRenderer.invoke('fields:save', input),
+  setCustomFieldActive: (id, active) => ipcRenderer.invoke('fields:set-active', { id, active })
+});
