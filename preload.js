@@ -2,6 +2,12 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('AmlakDesktop', {
   openCalculator: () => ipcRenderer.invoke('open-calculator'),
+  openContacts: () => ipcRenderer.invoke('open-contacts'),
+  listContacts: filters => ipcRenderer.invoke('contacts:list', filters),
+  saveManagedContact: input => ipcRenderer.invoke('contacts:save', input),
+  setContactActive: (id, active) => ipcRenderer.invoke('contacts:active', {id, active}),
+  getContactDetail: id => ipcRenderer.invoke('contacts:detail', id),
+  addContactFollowup: input => ipcRenderer.invoke('contacts:followup', input),
   openRecordEntry: type => ipcRenderer.invoke('open-record-entry', type),
   saveDraft: input => ipcRenderer.invoke('records:save-draft', input),
   listDrafts: () => ipcRenderer.invoke('records:list-drafts'),
