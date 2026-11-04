@@ -117,9 +117,26 @@ async function main() {
     assert.ok(propertyMatches[0].score>=45);
     assert.ok(propertyMatches.find(match=>match.item.id===demand.id).reasons.includes('فیلدهای سفارشی مشترک و همسان'));
 
+    const incompleteProperty = database.submitRecord({
+      type:'property',
+      payload:{
+        transactionType:'sale',
+        property:{propertyType:'apartment',usageType:'residential'},
+        location:{city:'گرمسار',neighborhood:'آزمایشی'},
+        details:{},
+        pricing:{},
+        contact:{fullName:'آزمون پرونده ناقص'},
+        notes:{public:'پرونده بدون متراژ و قیمت'}
+      }
+    });
+    const incompleteMatch = database.findRecordMatches('property',incompleteProperty.id)
+      .find(match=>match.item.id===demand.id);
+    assert.ok(incompleteMatch);
+    assert.ok(!incompleteMatch.reasons.includes('متراژ در محدوده تقاضا'));
+    assert.ok(!incompleteMatch.reasons.includes('قیمت اعلامی در بودجه'));
 
     const stats = database.dashboardStats();
-    assert.strictEqual(stats.properties, 1);
+    assert.strictEqual(stats.properties, 2);
     assert.strictEqual(stats.demands, 1);
     assert.strictEqual(stats.drafts, 0);
     console.log('Stage 11 database smoke test: PASS');
