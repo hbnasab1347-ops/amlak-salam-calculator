@@ -1,4 +1,4 @@
-const api=window.AmlakDesktop;let type='property',rows=[];
+const api=window.AmlakDesktop;let type=new URLSearchParams(location.search).get('type')==='demand'?'demand':'property',rows=[];
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt=v=>v==null||v===''?'—':Number.isFinite(Number(v))?Number(v).toLocaleString('fa-IR'):String(v);
