@@ -135,6 +135,26 @@ async function main() {
     assert.ok(!incompleteMatch.reasons.includes('متراژ در محدوده تقاضا'));
     assert.ok(!incompleteMatch.reasons.includes('قیمت اعلامی در بودجه'));
 
+
+    const managed = database.saveManagedContact({fullName:'مخاطب مدیریتی آزمایشی',mobile:'09350000000',email:'test@example.invalid',role:'both',publicNotes:'یادداشت عمومی',confidentialNotes:'یادداشت محرمانه'});
+    assert.ok(managed.id);
+    let contacts = database.listContacts({query:'مخاطب مدیریتی'});
+    assert.strictEqual(contacts.length,1);
+    assert.strictEqual(contacts[0].role,'both');
+    assert.strictEqual(contacts[0].isActive,true);
+    assert.throws(()=>database.saveManagedContact({fullName:'',role:'owner'}),/نام و نام خانوادگی/);
+    database.saveManagedContact({id:managed.id,fullName:'مخاطب ویرایش‌شده',mobile:'09350000000',role:'applicant'});
+    database.addContactFollowup({contactId:managed.id,type:'call',summary:'تماس آزمایشی',nextAt:'2030-01-01T10:00'});
+    const contactDetail=database.getContactDetail(managed.id);
+    assert.strictEqual(contactDetail.contact.fullName,'مخاطب ویرایش‌شده');
+    assert.strictEqual(contactDetail.followups.length,1);
+    assert.strictEqual(contactDetail.followups[0].summary,'تماس آزمایشی');
+    assert.throws(()=>database.addContactFollowup({contactId:managed.id,type:'bad',summary:'نامعتبر'}),/نوع پیگیری/);
+    database.setContactActive(managed.id,false);
+    assert.strictEqual(database.listContacts({active:'inactive'}).some(c=>c.id===managed.id),true);
+    database.setContactActive(managed.id,true);
+    assert.strictEqual(database.listContacts({active:'active'}).some(c=>c.id===managed.id),true);
+
     const stats = database.dashboardStats();
     assert.strictEqual(stats.properties, 2);
     assert.strictEqual(stats.demands, 1);
