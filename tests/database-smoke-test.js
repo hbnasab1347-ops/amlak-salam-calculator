@@ -35,7 +35,9 @@ async function main() {
       options:[], transactionTypes:['sale'], propertyTypes:['land'], usageTypes:[],
       sortOrder:12, isRequired:true
     });
-    assert.ok(customField.saved);\n    const demandCustomField = database.saveCustomField({ entityType:'demand', key:'passage_width', label:'عرض گذر موردنیاز', fieldType:'number', options:[], transactionTypes:['purchase'], propertyTypes:['land'], usageTypes:[], sortOrder:12, isRequired:false });\n    assert.ok(demandCustomField.saved);
+    assert.ok(customField.saved);
+    const demandCustomField = database.saveCustomField({ entityType:'demand', key:'passage_width', label:'عرض گذر موردنیاز', fieldType:'number', options:[], transactionTypes:['purchase'], propertyTypes:['land'], usageTypes:[], sortOrder:12, isRequired:false });
+    assert.ok(demandCustomField.saved);
     let propertyFields = database.listCustomFields('property',false);
     assert.strictEqual(propertyFields.length,1);
     assert.strictEqual(propertyFields[0].label,'عرض گذر');
@@ -75,7 +77,8 @@ async function main() {
         details: { area: 92, constructionYear: 1400, elevator: true, parkingType: 'exclusive', storage: true, directLight: true, facilities: ['تلفن ثابت'] },
         pricing: { publicPrice: 8500000000, redlinePrice: 8100000000 },
         contact: { fullName: 'آزمون داخلی', mobile: '09000000000' },
-        notes: { public: 'یادداشت آزمایشی عمومی', confidential: 'یادداشت آزمایشی محرمانه' },\n        customFields: { property: { passage_width: 8.5 } }
+        notes: { public: 'یادداشت آزمایشی عمومی', confidential: 'یادداشت آزمایشی محرمانه' },
+        customFields: { property: { passage_width: 8.5 } }
       }
     });
     assert.ok(property.code.startsWith('AS-P-'));
@@ -95,7 +98,8 @@ async function main() {
         pricing: { budgetMin: 5000000000, budgetMax: 9000000000 },
         conditions: { depositMin: 0, depositMax: 0, rentMin: 0, rentMax: 0 },
         contact: { fullName: 'متقاضی آزمایشی', mobile: '09120000000' },
-        notes: { public: 'تقاضای آزمایشی', confidential: '' },\n        customFields: { demand: { passage_width: 8.5 } }
+        notes: { public: 'تقاضای آزمایشی', confidential: '' },
+        customFields: { demand: { passage_width: 8.5 } }
       }
     });
     assert.ok(demand.code.startsWith('AS-D-'));
@@ -110,7 +114,8 @@ async function main() {
     assert.strictEqual(database.listArchiveRecords('property',{query:'آزمایشی عمومی'}).length,1);
     const propertyMatches = database.findRecordMatches('property',property.id);
     assert.ok(propertyMatches.some(match=>match.item.id===demand.id));
-    assert.ok(propertyMatches[0].score>=45);\n    assert.ok(propertyMatches.find(match=>match.item.id===demand.id).reasons.includes('فیلدهای سفارشی مشترک و همسان'));
+    assert.ok(propertyMatches[0].score>=45);
+    assert.ok(propertyMatches.find(match=>match.item.id===demand.id).reasons.includes('فیلدهای سفارشی مشترک و همسان'));
 
 
     const stats = database.dashboardStats();
