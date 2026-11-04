@@ -44,6 +44,13 @@ modules.forEach((name,i)=>{const b=document.createElement('button');b.className=
 function openModule(name){
  if(name==='محاسبه‌گرها'){openCalculator();return;}
  const routes={'ثبت ملک':'property','ثبت تقاضا':'demand','پیش‌نویس‌ها':'drafts'};
+ if(name==='بایگانی ملک'||name==='بایگانی تقاضا'){
+  const archiveType=name==='بایگانی ملک'?'property':'demand';
+  if(window.AmlakDesktop&&typeof window.AmlakDesktop.openArchive==='function'){
+   window.AmlakDesktop.openArchive(archiveType).catch(error=>toast(error.message||'امکان باز کردن بایگانی وجود ندارد.'));
+  }else{toast('بایگانی در این محیط قابل اجرا نیست.')}
+  return;
+ }
  if(routes[name]){
   if(window.AmlakDesktop&&typeof window.AmlakDesktop.openRecordEntry==='function'){
    window.AmlakDesktop.openRecordEntry(routes[name]).catch(error=>toast(error.message||'امکان باز کردن فرم وجود ندارد.'));
