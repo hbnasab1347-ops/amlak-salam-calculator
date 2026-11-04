@@ -440,8 +440,11 @@ function matchPropertyToDemand(property, demand) {
   const areaFits=area==null||(demand.area_min==null||area>=demand.area_min)&&(demand.area_max==null||area<=demand.area_max);
   add(areaFits,5,'متراژ در محدوده تقاضا');
   const price=property.public_price;
-  const budgetFits=price==null||(demand.budget_min==null||price>=demand.budget_min)&&(demand.budget_max==null||price<=demand.budget_max);
-  add(budgetFits,5,'قیمت اعلامی در بودجه');
+  const within=(value,min,max)=>value==null||(min==null||min===0||value>=min)&&(max==null||max===0||value<=max);
+  const budgetFits=property.transaction_type==='rent_lease'
+    ? within(property.deposit_amount,demand.deposit_min,demand.deposit_max)&&within(property.monthly_rent,demand.monthly_rent_min,demand.monthly_rent_max)
+    : within(price,demand.budget_min,demand.budget_max);
+  add(budgetFits,5,property.transaction_type==='rent_lease'?'ودیعه و اجاره در محدوده تقاضا':'قیمت اعلامی در بودجه');
   const needed=JSON.parse(demand.required_facilities_json||'[]');
   const available=JSON.parse(property.facilities_json||'[]');
   const facilityFits=!needed.length||needed.every(x=>available.includes(x));
