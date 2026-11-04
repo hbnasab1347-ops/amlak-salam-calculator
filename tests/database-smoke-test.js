@@ -35,7 +35,7 @@ async function main() {
       options:[], transactionTypes:['sale'], propertyTypes:['land'], usageTypes:[],
       sortOrder:12, isRequired:true
     });
-    assert.ok(customField.saved);
+    assert.ok(customField.saved);\n    const demandCustomField = database.saveCustomField({ entityType:'demand', key:'passage_width', label:'عرض گذر موردنیاز', fieldType:'number', options:[], transactionTypes:['purchase'], propertyTypes:['land'], usageTypes:[], sortOrder:12, isRequired:false });\n    assert.ok(demandCustomField.saved);
     let propertyFields = database.listCustomFields('property',false);
     assert.strictEqual(propertyFields.length,1);
     assert.strictEqual(propertyFields[0].label,'عرض گذر');
@@ -95,7 +95,7 @@ async function main() {
         pricing: { budgetMin: 5000000000, budgetMax: 9000000000 },
         conditions: { depositMin: 0, depositMax: 0, rentMin: 0, rentMax: 0 },
         contact: { fullName: 'متقاضی آزمایشی', mobile: '09120000000' },
-        notes: { public: 'تقاضای آزمایشی', confidential: '' }
+        notes: { public: 'تقاضای آزمایشی', confidential: '' },\n        customFields: { demand: { passage_width: 8.5 } }
       }
     });
     assert.ok(demand.code.startsWith('AS-D-'));
@@ -110,14 +110,14 @@ async function main() {
     assert.strictEqual(database.listArchiveRecords('property',{query:'آزمایشی عمومی'}).length,1);
     const propertyMatches = database.findRecordMatches('property',property.id);
     assert.ok(propertyMatches.some(match=>match.item.id===demand.id));
-    assert.ok(propertyMatches[0].score>=45);
+    assert.ok(propertyMatches[0].score>=45);\n    assert.ok(propertyMatches.find(match=>match.item.id===demand.id).reasons.includes('فیلدهای سفارشی مشترک و همسان'));
 
 
     const stats = database.dashboardStats();
     assert.strictEqual(stats.properties, 1);
     assert.strictEqual(stats.demands, 1);
     assert.strictEqual(stats.drafts, 0);
-    console.log('Stage 09 database smoke test: PASS');
+    console.log('Stage 11 database smoke test: PASS');
   } finally {
     fs.rmSync(directory, { recursive: true, force: true });
   }
