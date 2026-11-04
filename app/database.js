@@ -445,6 +445,17 @@ function matchPropertyToDemand(property, demand) {
   const available=JSON.parse(property.facilities_json||'[]');
   const facilityFits=!needed.length||needed.every(x=>available.includes(x));
   add(facilityFits,5,'امکانات موردنیاز');
+  const propertyCustom=customValues(safePayload(property),'property');
+  const demandCustom=customValues(safePayload(demand),'demand');
+  const sharedKeys=Object.keys(propertyCustom).filter(key=>Object.prototype.hasOwnProperty.call(demandCustom,key));
+  if(sharedKeys.length){
+    possible+=10;
+    const equal=sharedKeys.some(key=>{
+      const left=propertyCustom[key],right=demandCustom[key];
+      return JSON.stringify(Array.isArray(left)?[...left].sort():left)===JSON.stringify(Array.isArray(right)?[...right].sort():right);
+    });
+    if(equal){earned+=10;reasons.push('فیلدهای سفارشی مشترک و همسان');}
+  }
   const score=possible?Math.round(earned/possible*100):0;
   return {score,reasons};
 }
