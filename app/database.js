@@ -437,10 +437,15 @@ function matchPropertyToDemand(property, demand) {
   const txMap={sale:'purchase',presale:'pre_purchase',rent_lease:'rent_lease',participation:'participation'};
   add(txMap[property.transaction_type]===demand.request_type,15,'نوع معامله سازگار');
   const area=property.area_sqm;
-  const areaFits=area==null||(demand.area_min==null||area>=demand.area_min)&&(demand.area_max==null||area<=demand.area_max);
+  const within=(value,min,max)=>{
+    const constrained=(min!=null&&min!==0)||(max!=null&&max!==0);
+    if(!constrained)return true;
+    if(value==null)return false;
+    return (min==null||min===0||value>=min)&&(max==null||max===0||value<=max);
+  };
+  const areaFits=within(area,demand.area_min,demand.area_max);
   add(areaFits,5,'متراژ در محدوده تقاضا');
   const price=property.public_price;
-  const within=(value,min,max)=>value==null||(min==null||min===0||value>=min)&&(max==null||max===0||value<=max);
   const budgetFits=property.transaction_type==='rent_lease'
     ? within(property.deposit_amount,demand.deposit_min,demand.deposit_max)&&within(property.monthly_rent,demand.monthly_rent_min,demand.monthly_rent_max)
     : within(price,demand.budget_min,demand.budget_max);
