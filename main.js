@@ -54,3 +54,5 @@ autoUpdater.on('update-downloaded', async () => {
 });
 
 autoUpdater.on('error', err => console.log('Updater error:', err.message));
+
+// Trigger a fresh Windows installer build for the corrected calculator UI.
