@@ -497,7 +497,7 @@ function listContacts(filters = {}) {
   const query = asText(filters.query).toLocaleLowerCase();
   const role = asText(filters.role);
   const active = filters.active === 'all' ? '' : filters.active === 'inactive' ? '0' : '1';
-  return many(\`SELECT c.id,c.full_name AS fullName,c.mobile,c.phone,c.email,c.contact_role AS role,
+  return many(`SELECT c.id,c.full_name AS fullName,c.mobile,c.phone,c.email,c.contact_role AS role,
     c.public_notes AS publicNotes,c.confidential_notes AS confidentialNotes,c.is_active AS isActive,
     c.created_at AS createdAt,c.updated_at AS updatedAt,
     (SELECT COUNT(*) FROM property_records p WHERE p.owner_contact_id=c.id) AS propertyCount,
@@ -505,7 +505,7 @@ function listContacts(filters = {}) {
     FROM contacts c
     WHERE (?='' OR c.contact_role=? OR (?='both' AND c.contact_role IN ('owner','applicant')))
       AND (?='' OR c.is_active=?)
-    ORDER BY c.updated_at DESC LIMIT 1000\`, [role,role,role,active,active])
+    ORDER BY c.updated_at DESC LIMIT 1000`, [role,role,role,active,active])
     .filter(c => !query || [c.fullName,c.mobile,c.phone,c.email].some(v=>String(v||'').toLocaleLowerCase().includes(query)))
     .map(c=>({...c,isActive:Boolean(c.isActive)}));
 }
