@@ -26,7 +26,9 @@ const facilityOptions = ['تلفن ثابت','کمد دیواری','جاکفشی
 let draftId = null;
 let currentStep = 0;
 let saveTimer = null;
-let saving = false;
+let saveRevision = 0;
+let savedRevision = 0;
+let savePromise = null;
 let locationCatalog = [];
 let customFieldDefinitions = [];
 let state = {
@@ -262,20 +264,36 @@ function renderStep(){
 }
 function scheduleSave(){
   if(mode==='drafts') return;
-  setSaveState('در حال ذخیره تغییرات…');
+  saveRevision++;
+  setSaveState('تغییرات در صف ذخیره…');
   clearTimeout(saveTimer);
-  saveTimer=setTimeout(saveDraftNow,650);
+  saveTimer=setTimeout(()=>saveDraftNow().catch(()=>{}),450);
 }
 async function saveDraftNow(){
-  if(saving || !api) return;
-  saving=true;
-  try{
-    const result=await api.saveDraft({id:draftId,type:recordType,step:currentStep,payload:state});
-    draftId=result.id;
-    $('#draftLabel').textContent='پیش‌نویس: '+draftId.slice(0,8);
-    setSaveState('ذخیره شد · '+new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}));
-  }catch(error){setSaveState('ذخیره خودکار انجام نشد');console.error(error);}
-  finally{saving=false;}
+  if(!api) throw new Error('ارتباط با پایگاه داده برقرار نیست.');
+  clearTimeout(saveTimer);
+  if(savePromise) return savePromise;
+  savePromise=(async()=>{
+    while(savedRevision<saveRevision){
+      const revision=saveRevision;
+      const snapshot=JSON.parse(JSON.stringify(state));
+      setSaveState('در حال ذخیره تغییرات…');
+      const result=await api.saveDraft({id:draftId,type:recordType,step:currentStep,payload:snapshot});
+      draftId=result.id;
+      savedRevision=revision;
+      $('#draftLabel').textContent='پیش‌نویس: '+draftId.slice(0,8);
+      setSaveState('ذخیره شد · '+new Date().toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'}));
+    }
+    return {id:draftId,updated:true};
+  })();
+  try{return await savePromise;}
+  catch(error){setSaveState('ذخیره ناموفق؛ دوباره تلاش کنید');console.error(error);throw error;}
+  finally{savePromise=null;}
+}
+async function closeAfterSave(){
+  if(mode==='drafts'){window.close();return;}
+  try{await saveDraftNow();window.close();}
+  catch(error){if(window.confirm('آخرین تغییرات ذخیره نشد. آیا با وجود این، پنجره بسته شود؟'))window.close();}
 }
 function validateStep(){
   if(currentStep===0 && !state.transactionType){toast('ابتدا نوع معامله یا تقاضا را انتخاب کنید.');return false;}
@@ -307,9 +325,12 @@ function renderDraftList(drafts){
   $('#stepContent').innerHTML='<h2 class="step-title">پیش‌نویس‌های ذخیره‌شده</h2><p class="step-help">برای ادامه، پیش‌نویس موردنظر را انتخاب کنید.</p><div class="draft-list">'+drafts.map(d=>`<div class="draft-item"><div class="draft-meta"><strong>${d.type==='property'?'ثبت ملک':'ثبت تقاضا'} · مرحله ${Number(d.step)+1} از ۶</strong><small>آخرین ذخیره: ${new Date(d.updatedAt).toLocaleString('fa-IR')}</small></div><div class="draft-actions"><button class="small-button" data-resume="${d.id}" data-type="${d.type}">ادامه ثبت</button><button class="small-button danger" data-delete="${d.id}">حذف پیش‌نویس</button></div></div>`).join('')+'</div>';
 }
 async function init(){
-  $('#closeWindow').addEventListener('click',()=>window.close());
-  $('#cancelButton').addEventListener('click',()=>window.close());
+  $('#closeWindow').addEventListener('click',closeAfterSave);
+  $('#cancelButton').addEventListener('click',closeAfterSave);
+  const forceSaveButton=$('#forceSave');
+  if(forceSaveButton) forceSaveButton.addEventListener('click',async()=>{try{saveRevision++;await saveDraftNow();toast('آخرین تغییرات با موفقیت ذخیره شد.');}catch(error){toast(error.message||'ذخیره انجام نشد.');}});
   if(mode==='drafts'){
+    if(forceSaveButton) forceSaveButton.hidden=true;
     $('#stepContent').addEventListener('click',async event=>{
       const resume=event.target.closest('[data-resume]');
       const remove=event.target.closest('[data-delete]');
@@ -366,5 +387,7 @@ async function init(){
     if(remove){await api.deleteDraft(remove.dataset.delete);renderDraftList(await api.listDrafts());toast('پیش‌نویس حذف شد.');}
   });
   if(!draftToLoad) scheduleSave();
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&mode!=='drafts'&&savedRevision<saveRevision)saveDraftNow().catch(()=>{});});
+  window.addEventListener('pagehide',()=>{if(mode!=='drafts'&&savedRevision<saveRevision){const payload=JSON.parse(JSON.stringify(state));api.saveDraft({id:draftId,type:recordType,step:currentStep,payload}).catch(()=>{});}});
 }
 init().catch(error=>{console.error(error);$('#stepContent').innerHTML='<div class="empty-state">راه‌اندازی فرم انجام نشد. لطفاً برنامه را ببندید و دوباره اجرا کنید.</div>';toast(error.message||'خطا در راه‌اندازی فرم');});
