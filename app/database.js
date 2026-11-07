@@ -523,7 +523,7 @@ function saveManagedContact(input = {}) {
   } else {
     const newId=makeId();
     run('INSERT INTO contacts(id,full_name,mobile,phone,email,contact_role,public_notes,confidential_notes,created_at,updated_at,is_active) VALUES(?,?,?,?,?,?,?,?,?,?,1)',
-      [newId,...values]);
+      [newId,...values,values[7]]);
     persist(); return {id:newId,saved:true};
   }
   persist(); return {id,saved:true};
